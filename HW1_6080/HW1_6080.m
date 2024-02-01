@@ -20,7 +20,7 @@ ae = 6378.0; % [km] mean equitorial radius of earth
 % constants.mu = mu; % [km^3/s^2] earth's gravitational parameter
 constants.ae = ae; % [km] mean equitorial radius of earth
 % constants.J2 = 1.08263*10^-3; % J2 perturbation
-J2 = 1.08269*10^-3; % J2 perturbation
+J2 = 0.0010826269; % J2 perturbation
 % J3 = -0.0000025323;
 J3 = 0;
 C = [mu; J2; J3];
@@ -66,8 +66,60 @@ for j = 1:length(t1)
 end
 
 
-error = S1(:,1:6) - HW1_truth_traj_mu_J2_with_STM(:,2:7);
+% error = S1(:,1:6) - HW1_truth_traj_mu_J2_with_STM(:,2:7);
 error = [S1(:,1:6), comparing_flat_STM] - HW1_truth_traj_mu_J2_with_STM(:,2:end);
+
+figure
+subplot(6, 1, 1);
+sgtitle('Difference in deviation vectors vs time');
+plot(t2, STM_deviation(1, :))
+hold on
+plot(t2, true_deviation(1,:));
+% label
+xlabel('time [s]');
+ylabel("$\delta x$", 'Interpreter', 'latex');
+legend("STM", "integrated")
+% subplot
+subplot(6, 1, 2);
+plot(t2, STM_deviation(2, :));
+hold on
+plot(t2, true_deviation(2,:));
+% label
+xlabel('time [s]');
+ylabel("$\delta y$", 'Interpreter', 'latex');
+% subplot
+subplot(6, 1, 3);
+plot(t2, STM_deviation(3, :));
+hold on
+plot(t2, true_deviation(3,:));
+% label
+xlabel('time [s]');
+ylabel("$\delta z$", 'Interpreter', 'latex');
+% subplot
+subplot(6, 1, 4);
+plot(t2, STM_deviation(4, :));
+hold on
+plot(t2, true_deviation(4,:));
+% label
+xlabel('time [s]');
+ylabel("$\delta \dot{x}$", 'Interpreter', 'latex');
+% subplot
+subplot(6, 1, 5);
+plot(t2, STM_deviation(5, :));
+hold on
+plot(t2, true_deviation(5,:));
+% label
+xlabel('time [s]');
+ylabel("$\delta \dot{y}$", 'Interpreter', 'latex');
+% subplot
+subplot(6, 1, 6);
+plot(t2, STM_deviation(6, :));
+hold on
+plot(t2, true_deviation(6,:));
+% label
+xlabel('time [s]');
+ylabel("$\delta \dot{z}$", 'Interpreter', 'latex');
+
 
 figure
 subplot(6, 1, 1);

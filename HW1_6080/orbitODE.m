@@ -59,11 +59,17 @@ aJ3PartialC = [
 ];
 
 % STM Integration
+% A = [
+%     zeros(3), eye(3), zeros(3);
+%     amuPartialR+aJ2PartialR+aJ3PartialR, zeros(3), amuPartialC+aJ2PartialC+aJ3PartialC;
+%     zeros(3), zeros(3), zeros(3);
+% ];
 A = [
     zeros(3), eye(3), zeros(3);
-    amuPartialR+aJ2PartialR+aJ3PartialR, zeros(3), amuPartialC+aJ2PartialC+aJ3PartialC;
+    amuPartialR+aJ2PartialR, zeros(3), amuPartialC+aJ2PartialC;
     zeros(3), zeros(3), zeros(3);
 ];
+
 
 PhiDot = A*Phi;
 
