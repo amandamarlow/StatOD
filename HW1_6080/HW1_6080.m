@@ -25,6 +25,9 @@ J2 = 0.0010826269; % J2 perturbation
 J3 = 0;
 C = [mu; J2; J3];
 
+constants.theta0 = 122.0*pi/180.0; % rad
+constants.omegaE = 2*pi/24/(60^2); % [rad/s] earths rotation around z axis
+
 % convert orbit elements to initial state in ECI frame
 rp = a*(1-e);
 r0_p = [rp; 0; 0];

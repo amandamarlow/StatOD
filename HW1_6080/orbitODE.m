@@ -4,7 +4,15 @@ function [Sdot] = orbitODE(t,S,constants)
 
 % mu = constants.mu;
 ae = constants.ae;
+theta0 = constants.theta0;
+omegaE = constants.omegaE;
 % J2 = constants.J2;
+
+alpha = theta0 + omegaE*t;
+ecef2eci = [
+    cos(alpha), sin(alpha), 0;
+    sin(alpha), cos(alpha), 0;
+    0, 0, 1];
 
 x = S(1);
 y = S(2);
@@ -22,7 +30,12 @@ Phi = reshape(S(10:end),[9,9]);
 
 % Dynamics
 a_mu_N = -mu*r_N/(r^3);
-a_J2_N = -3*mu*(ae^2)*J2/2/(r^7) * [x*(r^2 - 5*z^2); y*(r^2 - 5*z^2); z*(r^2 + 2*(x^2 + y^2) - 3*z^2)];
+r_B = ecef2eci'*r_N;
+x_B = r_B(1);
+y_B = r_B(2);
+z_B = r_B(3);
+a_J2_N = ecef2eci * -3*mu*(ae^2)*J2/2/(r^7) * [x_B*(r^2 - 5*z_B^2); y*(r^2 - 5*z_B^2); z_B*(r^2 + 2*(x_B^2 + y_B^2) - 3*z_B^2)];
+% a_J2_N = ecef2eci * -3*mu*(ae^2)*J2/2/(r^7) * [x*(r^2 - 5*z^2); y*(r^2 - 5*z^2); z*(r^2 + 2*(x^2 + y^2) - 3*z^2)];
 a_N = a_mu_N + a_J2_N;
 
 % Jacobians
