@@ -31,6 +31,7 @@ C = [mu; J2; J3];
 
 constants.omegaE = 7.2921158553e-5; % [rad/s]
 constants.theta0 = 122*pi/180; % [rad]
+c = 299792.458; % [km/s]
 
 % convert orbit elements to initial state in ECI frame
 rp = a*(1-e);
@@ -44,7 +45,7 @@ S0 = [r0_ECI; v0_ECI; C; reshape(eye(9),[],1)];
 
 % get time span
 T = 2*pi*sqrt(a^3/mu);
-% tspan = [0 15*T];
+% tspan = 0:10:15*T;
 tspan = HW1_truth_traj_mu_J2_with_STM(:,1);
 
 % simulate of reference trajectory
@@ -71,10 +72,9 @@ comparing_flat_STM = zeros(length(t1),36);
 for j = 1:length(t1)
   comparing_flat_STM(j,:) = reshape(STM(1:6,1:6,j),1,[]);
 end
-
-
-% error = S1(:,1:6) - HW1_truth_traj_mu_J2_with_STM(:,2:7);
 error = [S1(:,1:6), comparing_flat_STM] - HW1_truth_traj_mu_J2_with_STM(:,2:end);
+max_intcol_error = max(error);
+max_int_error = max(error, [], "all");
 
 % Simulate Measurements
 
@@ -88,13 +88,30 @@ r_s2_E = latlon2ECEF(ae, latlon_s2(1), latlon_s2(2));
 r_s3_E = latlon2ECEF(ae, latlon_s3(1), latlon_s3(2));
 
 [range_observations, rangeRate_observations, elevations_byStation, elevations_all] = simMeas(t1, S1, [r_s1_E,r_s2_E,r_s3_E], constants);
+
 range_error = range_observations - HW1_truth_range_htilde;
 rangeRate_error = rangeRate_observations - HW1_truth_rangerate_htilde;
+max_rng_error = max(range_error, [], "all");
+max_rngRt_error = max(rangeRate_error, [], "all");
 
-elevation1_idx = find(elevations_byStation(:,2)==1);
-elevation2_idx = find(elevations_byStation(:,2)==2);
-elevation3_idx = find(elevations_byStation(:,2)==3);
+idx1 = find(elevations_byStation(:,2)==1);
+idx2 = find(elevations_byStation(:,2)==2);
+idx3 = find(elevations_byStation(:,2)==3);
+t_stn1 = range_observations(idx1, 1);
+t_stn2 = range_observations(idx2, 1);
+t_stn3 = range_observations(idx3, 1);
 
+% dopler
+range = range_observations(:,3);
+rangeRate = rangeRate_observations(:,3);
+f_ref = 8.44*10^9;
+
+f_shift = -2*rangeRate/c*f_ref;
+RU = 221/749*range/c*f_ref;
+
+% noise
+noise = mvnrnd(0,(5e-7)^2, length(rangeRate_observations));
+noisyRangeRate = rangeRate + noise;
 %% Plotting
 figure
 subplot(3, 2, 1);
@@ -102,16 +119,14 @@ sgtitle('Deviation vectors vs time');
 plot(t2, STM_deviation(1, :))
 hold on
 plot(t2, true_deviation(1,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta x$", 'Interpreter', 'latex');
-legend("STM", "integrated")
+legend("STM", "integrated", 'Location', 'northwest')
 % subplot
 subplot(3, 2, 3);
 plot(t2, STM_deviation(2, :));
 hold on
 plot(t2, true_deviation(2,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta y$", 'Interpreter', 'latex');
 % subplot
@@ -119,7 +134,6 @@ subplot(3, 2, 5);
 plot(t2, STM_deviation(3, :));
 hold on
 plot(t2, true_deviation(3,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta z$", 'Interpreter', 'latex');
 % subplot
@@ -127,7 +141,6 @@ subplot(3, 2, 2);
 plot(t2, STM_deviation(4, :));
 hold on
 plot(t2, true_deviation(4,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta \dot{x}$", 'Interpreter', 'latex');
 % subplot
@@ -135,7 +148,6 @@ subplot(3, 2, 4);
 plot(t2, STM_deviation(5, :));
 hold on
 plot(t2, true_deviation(5,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta \dot{y}$", 'Interpreter', 'latex');
 % subplot
@@ -143,60 +155,118 @@ subplot(3, 2, 6);
 plot(t2, STM_deviation(6, :));
 hold on
 plot(t2, true_deviation(6,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta \dot{z}$", 'Interpreter', 'latex');
 
 
 figure
-subplot(6, 1, 1);
+subplot(3, 2, 1);
 sgtitle('Difference in deviation vectors vs time');
 plot(t2, STM_deviation(1, :)-true_deviation(1,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta x_{STM} - \delta x_{true}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 2);
+subplot(3, 2, 3);
 plot(t2, STM_deviation(2, :)-true_deviation(2,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta y_{STM} - \delta y_{true}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 3);
+subplot(3, 2, 5);
 plot(t2, STM_deviation(3, :)-true_deviation(3,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta z_{STM} - \delta z_{true}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 4);
+subplot(3, 2, 2);
 plot(t2, STM_deviation(4, :)-true_deviation(4,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta \dot{x}_{STM} - \delta \dot{x}_{true}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 5);
+subplot(3, 2, 4);
 plot(t2, STM_deviation(5, :)-true_deviation(5,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta \dot{y}_{STM} - \delta \dot{y}_{true}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 6);
+subplot(3, 2, 6);
 plot(t2, STM_deviation(6, :)-true_deviation(6,:));
-% label
 xlabel('time [s]');
 ylabel("$\delta \dot{z}_{STM} - \delta \dot{z}_{true}$", 'Interpreter', 'latex');
 
+% plot simulated measurements
+figure
+subplot(2,1,1)
+sgtitle("Simulated Ideal Measurements")
+scatter(t_stn1, range(idx1), '.')
+hold on
+scatter(t_stn2, range(idx2), '.')
+scatter(t_stn3, range(idx3), '.')
+legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
+xlabel('Time [s]')
+ylabel("Range ($\rho$) [km]", 'Interpreter', 'latex')
+grid on
+subplot(2,1,2)
+scatter(t_stn1, rangeRate(idx1), '.')
+hold on
+scatter(t_stn2, rangeRate(idx2), '.')
+scatter(t_stn3, rangeRate(idx3), '.')
+legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
+xlabel('Time [s]')
+ylabel("Range Rate ($\dot{\rho}$) [km/s]", 'Interpreter', 'latex')
+grid on
 
 % plot elevation
 grayColor = [.7 .7 .7];
 figure
 plot(t1, elevations_all, '--', 'Color', grayColor)
 hold on
-scatter(elevations_byStation(elevation1_idx,1), elevations_byStation(elevation1_idx,3), '.')
-scatter(elevations_byStation(elevation2_idx,1), elevations_byStation(elevation2_idx,3), '.')
-scatter(elevations_byStation(elevation3_idx,1), elevations_byStation(elevation3_idx,3), '.')
+scatter(elevations_byStation(idx1,1), elevations_byStation(idx1,3), '.')
+scatter(elevations_byStation(idx2,1), elevations_byStation(idx2,3), '.')
+scatter(elevations_byStation(idx3,1), elevations_byStation(idx3,3), '.')
 title("Elevation Angle vs. Time")
 yline(10)
-legend('', '', '', 'Station 1', 'Station 2', 'Station 3', 'Horizon')
+legend('', '', '', 'Station 1', 'Station 2', 'Station 3', 'Elevation Mask', 'Location', 'southeast')
 ylabel("Elevation Angle [degrees]")
 xlabel("Time [s]")
+
+% plot dopler shift
+figure
+subplot(2,1,1)
+sgtitle("Simulated Real Unit Measurements")
+scatter(t_stn1, RU(idx1), '.')
+hold on
+scatter(t_stn2, RU(idx2), '.')
+scatter(t_stn3, RU(idx3), '.')
+legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
+xlabel('Time [s]')
+ylabel("Range [RU]")
+grid on
+subplot(2,1,2)
+scatter(t_stn1, f_shift(idx1), '.')
+hold on
+scatter(t_stn2, f_shift(idx2), '.')
+scatter(t_stn3, f_shift(idx3), '.')
+legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
+xlabel('Time [s]')
+ylabel("Doppler Shift [Hz]")
+grid on
+
+% plot simulated measurements
+figure
+subplot(2,1,1)
+sgtitle("Simulated Noisy Range Rate Measurements")
+scatter(t_stn1, noisyRangeRate(idx1), '.')
+hold on
+scatter(t_stn2, noisyRangeRate(idx2), '.')
+scatter(t_stn3, noisyRangeRate(idx3), '.')
+legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
+xlabel('Time [s]')
+ylabel("Range Rate ($\dot{\rho}$) [km/s]", 'Interpreter', 'latex')
+grid on
+subplot(2,1,2)
+scatter(t_stn1, noisyRangeRate(idx1)-rangeRate(idx1), '.')
+hold on
+scatter(t_stn2, noisyRangeRate(idx2)-rangeRate(idx2), '.')
+scatter(t_stn3, noisyRangeRate(idx3)-rangeRate(idx3), '.')
+legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
+xlabel('Time [s]')
+ylabel("$\dot{\rho}_{noisy}$ - $\dot{\rho}_{noisy}$ [km/s]", 'Interpreter', 'latex')
+grid on
