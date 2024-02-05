@@ -3,8 +3,12 @@ clc
 close all
 
 addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD')
+addpath("C:\Users\marlo\MATLAB Drive\6010\RigidBodyKinematics-Matlab\Matlab")
+
 load("HW1_truth_traj_mu_J2_with_STM.txt")
 load("HW1_truth_J2_J3_acc.txt")
+load("HW1_truth_range_htilde.txt")
+load("HW1_truth_rangerate_htilde.txt")
 
 % given orbit elements w/ respect to ECI
 a = 10000; %km
@@ -24,6 +28,9 @@ J2 = 0.0010826269; % J2 perturbation
 % J3 = -0.0000025323;
 J3 = 0;
 C = [mu; J2; J3];
+
+constants.omegaE = 7.2921158553e-5; % [rad/s]
+constants.theta0 = 122*pi/180; % [rad]
 
 % convert orbit elements to initial state in ECI frame
 rp = a*(1-e);
@@ -69,9 +76,29 @@ end
 % error = S1(:,1:6) - HW1_truth_traj_mu_J2_with_STM(:,2:7);
 error = [S1(:,1:6), comparing_flat_STM] - HW1_truth_traj_mu_J2_with_STM(:,2:end);
 
+% Simulate Measurements
+
+% station locations
+latlon_s1 = [-35.39833; 148.981944]*pi/180; % [rad]
+latlon_s2 = [40.427222; 355.749444]*pi/180; % [rad]
+latlon_s3 = [35.247164; 243.205]*pi/180; % [rad]
+
+r_s1_E = latlon2ECEF(ae, latlon_s1(1), latlon_s1(2));
+r_s2_E = latlon2ECEF(ae, latlon_s2(1), latlon_s2(2));
+r_s3_E = latlon2ECEF(ae, latlon_s3(1), latlon_s3(2));
+
+[range_observations, rangeRate_observations, elevations_byStation, elevations_all] = simMeas(t1, S1, [r_s1_E,r_s2_E,r_s3_E], constants);
+range_error = range_observations - HW1_truth_range_htilde;
+rangeRate_error = rangeRate_observations - HW1_truth_rangerate_htilde;
+
+elevation1_idx = find(elevations_byStation(:,2)==1);
+elevation2_idx = find(elevations_byStation(:,2)==2);
+elevation3_idx = find(elevations_byStation(:,2)==3);
+
+%% Plotting
 figure
-subplot(6, 1, 1);
-sgtitle('Difference in deviation vectors vs time');
+subplot(3, 2, 1);
+sgtitle('Deviation vectors vs time');
 plot(t2, STM_deviation(1, :))
 hold on
 plot(t2, true_deviation(1,:));
@@ -80,7 +107,7 @@ xlabel('time [s]');
 ylabel("$\delta x$", 'Interpreter', 'latex');
 legend("STM", "integrated")
 % subplot
-subplot(6, 1, 2);
+subplot(3, 2, 3);
 plot(t2, STM_deviation(2, :));
 hold on
 plot(t2, true_deviation(2,:));
@@ -88,7 +115,7 @@ plot(t2, true_deviation(2,:));
 xlabel('time [s]');
 ylabel("$\delta y$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 3);
+subplot(3, 2, 5);
 plot(t2, STM_deviation(3, :));
 hold on
 plot(t2, true_deviation(3,:));
@@ -96,7 +123,7 @@ plot(t2, true_deviation(3,:));
 xlabel('time [s]');
 ylabel("$\delta z$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 4);
+subplot(3, 2, 2);
 plot(t2, STM_deviation(4, :));
 hold on
 plot(t2, true_deviation(4,:));
@@ -104,7 +131,7 @@ plot(t2, true_deviation(4,:));
 xlabel('time [s]');
 ylabel("$\delta \dot{x}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 5);
+subplot(3, 2, 4);
 plot(t2, STM_deviation(5, :));
 hold on
 plot(t2, true_deviation(5,:));
@@ -112,7 +139,7 @@ plot(t2, true_deviation(5,:));
 xlabel('time [s]');
 ylabel("$\delta \dot{y}$", 'Interpreter', 'latex');
 % subplot
-subplot(6, 1, 6);
+subplot(3, 2, 6);
 plot(t2, STM_deviation(6, :));
 hold on
 plot(t2, true_deviation(6,:));
@@ -158,3 +185,18 @@ plot(t2, STM_deviation(6, :)-true_deviation(6,:));
 % label
 xlabel('time [s]');
 ylabel("$\delta \dot{z}_{STM} - \delta \dot{z}_{true}$", 'Interpreter', 'latex');
+
+
+% plot elevation
+grayColor = [.7 .7 .7];
+figure
+plot(t1, elevations_all, '--', 'Color', grayColor)
+hold on
+scatter(elevations_byStation(elevation1_idx,1), elevations_byStation(elevation1_idx,3), '.')
+scatter(elevations_byStation(elevation2_idx,1), elevations_byStation(elevation2_idx,3), '.')
+scatter(elevations_byStation(elevation3_idx,1), elevations_byStation(elevation3_idx,3), '.')
+title("Elevation Angle vs. Time")
+yline(10)
+legend('', '', '', 'Station 1', 'Station 2', 'Station 3', 'Horizon')
+ylabel("Elevation Angle [degrees]")
+xlabel("Time [s]")
