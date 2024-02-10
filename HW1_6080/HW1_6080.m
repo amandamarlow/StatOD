@@ -87,7 +87,7 @@ r_s1_E = latlon2ECEF(ae, latlon_s1(1), latlon_s1(2));
 r_s2_E = latlon2ECEF(ae, latlon_s2(1), latlon_s2(2));
 r_s3_E = latlon2ECEF(ae, latlon_s3(1), latlon_s3(2));
 
-[range_observations, rangeRate_observations, elevations_byStation, elevations_all] = simMeas(t1, S1, [r_s1_E,r_s2_E,r_s3_E], constants);
+[range_observations, rangeRate_observations, elevations_byStation, elevations_all] = simMeas(t1, S1', [r_s1_E,r_s2_E,r_s3_E], constants);
 
 range_error = range_observations - HW1_truth_range_htilde;
 rangeRate_error = rangeRate_observations - HW1_truth_rangerate_htilde;

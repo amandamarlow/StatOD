@@ -10,7 +10,7 @@ theta0 = const.theta0;
 n = 1;
 elevations_all = zeros(length(t),size(r_stns_E,2));
 for i = 1:length(t) 
-    r_sc_N = S_sc(i,1:3)';
+    r_sc_N = S_sc(1:3, i);
     
     alpha = t(i)*omegaE + theta0;
     EN = Euler3(alpha);
@@ -28,7 +28,7 @@ for i = 1:length(t)
        if  elevations_all(i,m) >= 10
 %            [rng,rngRate] = Rng_RngRate(S_sc, S_stn);
 %            y((m-1)*2+1:m*2, i) = [rng,rngRate];
-           [range, rangeRate, H_range, H_rangeRate] = Hcalcs(S_sc(i,1:6)', S_stn, NE);
+           [range, rangeRate, H_range, H_rangeRate] = Hcalcs(S_sc(1:6, i), S_stn, NE);
            range_observations(n, :) = [t(i), m, range, H_range];
            rangeRate_observations(n, :) = [t(i), m, rangeRate, H_rangeRate];
            elevations_byStation(n,:) = [t(i), m, elevations_all(i,m)];
