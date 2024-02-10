@@ -1,4 +1,4 @@
-function [t, X, dx, P, y, alpha] = CKF(Ymat, R, X0, dx0, P0, constants)
+function [X, dx, P, y, alpha] = CKF(t, Ymat, R, X0, dx0, P0, constants)
 %Classic/Linearized Kalman Filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -7,7 +7,7 @@ function [t, X, dx, P, y, alpha] = CKF(Ymat, R, X0, dx0, P0, constants)
 %   P0 = error covatiance associated with dx0
 
     % Preallocate
-    t = Ymat(:,1); % time after epoch [s] corresponds to measurement vector
+%     t = Ymat(:,1); % time after epoch [s] corresponds to measurement vector
     n = length(X0);
     X = zeros(n, length(t));
     dx = zeros(n, length(t));
@@ -26,22 +26,30 @@ function [t, X, dx, P, y, alpha] = CKF(Ymat, R, X0, dx0, P0, constants)
         dx_ap = STM*dx(:,i-1); % a priori state deviation estimate
         P_ap = STM*P(:,:,i-1)*STM';
         %% Compute observation deviation, observation-state matrix, kalman gain matrix
-        Y = Ymat(i,3:4)';
-        stationNum = Ymat(i,2);
-        [GofXt, H] = GandH(t(i), X(:,i), stationNum, constants);
-        %% Measurement Update
-        if isnan(GofXt(1)) % WHAT SHOULD WE ACTUALLY DO IF OUR NL MEASUREMENT PREDICTION SAYS NO STATIONS CAN SEE IT
+        Y_at_t = find(t(i) == Ymat(:,1));
+        if isempty(Y_at_t)
             dx(:,i) = dx_ap;
             P(:,:,i) = P_ap;
-            
             y(:,i) = NaN(2,1); % pre-fit residual
             alpha(:,i) = NaN(2,1); % post-fit residual
         else
-            y(:,i) = Y - GofXt; % pre-fit residual
-            K = P_ap*H' * inv(H*P_ap*H' + R(:,:,i)); % kalman gain
-            dx(:,i) = dx_ap + K*(y(:,i) - H*dx_ap);
-            P(:,:,i) = (eye(n) - K*H)*P_ap*(eye(n) - K*H)' + K*R(:,:,i)*K';
-            alpha(:,i) = y(:,i) - H*dx(:,i); % post-fit residual
+            for j = Y_at_t
+                Y = Ymat(j,3:4)';
+                stationNum = Ymat(j,2);
+                [GofXt, H] = GandH(t(i), X(:,i), stationNum, constants);
+                if isnan(GofXt(1))
+                    dx(:,i) = dx_ap;
+                    P(:,:,i) = P_ap;
+                    y(:,i) = NaN(2,1); % pre-fit residual
+                    alpha(:,i) = NaN(2,1); % post-fit residual 
+                else
+                    y(:,i) = Y - GofXt; % pre-fit residual
+                    K = P_ap*H' * inv(H*P_ap*H' + R(:,:,j)); % kalman gain
+                    dx(:,i) = dx_ap + K*(y(:,i) - H*dx_ap);
+                    P(:,:,i) = (eye(n) - K*H)*P_ap*(eye(n) - K*H)' + K*R(:,:,j)*K';
+                    alpha(:,i) = y(:,i) - H*dx(:,i); % post-fit residual 
+                end
+            end       
         end
     end
 

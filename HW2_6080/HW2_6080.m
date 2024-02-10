@@ -47,11 +47,8 @@ tspan = 0:10:15*T;
 
 % simulate of reference trajectory
 options = odeset('RelTol',1e-12,'AbsTol',1e-12);
-[t1,S1] = ode45(@(t,S) orbitODE(t,S,constants), tspan, S0, options);
+[t,S] = ode45(@(t,S) orbitODE(t,S,constants), tspan, S0, options);
 
-% STM
-flatSTM = S1(:,10:end);
-STM = reshape(flatSTM',9,9,[]);
 
 %% Simulate Measurements
 
@@ -63,7 +60,7 @@ r_s1_E = latlon2ECEF(ae, latlon_s1(1), latlon_s1(2));
 r_s2_E = latlon2ECEF(ae, latlon_s2(1), latlon_s2(2));
 r_s3_E = latlon2ECEF(ae, latlon_s3(1), latlon_s3(2));
 
-[range_observations, rangeRate_observations, elevations_byStation, elevations_all] = simMeas(t1, S1', [r_s1_E,r_s2_E,r_s3_E], constants);
+[range_observations, rangeRate_observations, elevations_byStation, elevations_all] = simMeas(t, S', [r_s1_E,r_s2_E,r_s3_E], constants);
 
 % Generate Data 
 Y_ideal = [range_observations(:,1:2), range_observations(:,3), rangeRate_observations(:,3)]; % [t(s), station#, range measurement, range rate measurement]
@@ -71,43 +68,15 @@ Y_ideal = [range_observations(:,1:2), range_observations(:,3), rangeRate_observa
 noise_sd = [1e-3; 1e-6]; % std deviation of the range and range rate noise
 range_noise = mvnrnd(0,(noise_sd(1))^2, length(range_observations));
 rangeRate_noise = mvnrnd(0,(noise_sd(2))^2, length(rangeRate_observations));
-Y_onlynoise = [range_observations(:,1:2), range_observations(:,3) + range_noise, rangeRate_observations(:,3) + rangeRate_noise]; % [t(s), station#, range measurement, range rate measurement]
-idx1 = find(Y_onlynoise(:,2)==1);
-idx2 = find(Y_onlynoise(:,2)==2);
-idx3 = find(Y_onlynoise(:,2)==3);
+Y_simulated = [range_observations(:,1:2), range_observations(:,3) + range_noise, rangeRate_observations(:,3) + rangeRate_noise]; % [t(s), station#, range measurement, range rate measurement]
+idx1 = find(Y_simulated(:,2)==1);
+idx2 = find(Y_simulated(:,2)==2);
+idx3 = find(Y_simulated(:,2)==3);
 
 %% Implement Filters
 
-% MAKE SURE STATE INCLUDES CONSTANTS (ITS ALREADY IN THE ORBITODE/INTEGRATION
-% FUNCTIONS)
-
-% % Organize measurements for filters
-% %   Y = Measurement Matrix -> [time after epoch [s], station number, measurement type
-% numR = length(rangeMeasurements);
-% numRR = length(rangeRateMeasurements);
-% Y = cell(numR+numRR,4);
-% R = zeros(numR+numRR,1);
-% q = 1;
-% for i = 1:max([numR, numRR])
-%    if i <= numR
-%        Y(q,1) = {range_observations(i,1)};
-%        Y(q,2) = {range_observations(i,2)};
-%        Y(q,3) = {"range"};
-%        Y(q,4) = {range_observations(i,3)};
-%        R(q) = (1e-3)^2;
-%        q = q+1;
-%    elseif i <= numRR
-%        Y(q,1) = {rangeRate_observations(i,1)};
-%        Y(q,2) = {rangeRate_observations(i,2)};
-%        Y(q,3) = {"rangeRate"};
-%        Y(q,4) = {rangeRate_observations(i,3)};
-%        R(q) = (1e-6)^2;
-%        q = q+1;
-%    end
-% end
-
 n = 6; % length of state vector
-m = length(Y_onlynoise);
+m = length(Y_simulated);
 X0 = S0(1:n);
 dx0 = zeros(n,1);
 P0 = blkdiag(eye(3), (1e-3)^2*eye(3));
@@ -116,40 +85,43 @@ R(1,1,:) = (noise_sd(2))^2;
 R(2,2,:) = (noise_sd(2))^2;
 
 % CKF - Classic/Linearized Kalman Filter
-[t, X_CKF_ideal, dx_CKF_ideal, P_CKF_ideal, y_CKF_ideal, alpha_CKF_ideal] = CKF(Y_ideal, R, X0, dx0, P0, constants);
-% error_CKF_ideal = (X_CKF_ideal + dx_CKF_ideal) - S1(:,1:3)';
-[t, X_CKF_onlynoise, dx_CKF_onlynoise, P_CKF_onlynoise, y_CKF_onlynoise, alpha_CKF_onlynoise] = CKF(Y_onlynoise, R, X0, dx0, P0, constants);
-% error_CKF_onlynoise = (X_CKF_onlynoise + dx_CKF_onlynoise) - S1(:,1:3)';
+[X_CKF_ideal, dx_CKF_ideal, P_CKF_ideal, y_CKF_ideal, alpha_CKF_ideal] = CKF(t, Y_ideal, R, X0, dx0, P0, constants);
+error_CKF_ideal = (X_CKF_ideal + dx_CKF_ideal) - S(:,1:n)';
+[X_CKF_onlynoise, dx_CKF_onlynoise, P_CKF_onlynoise, y_CKF_onlynoise, alpha_CKF_onlynoise] = CKF(t, Y_simulated, R, X0, dx0, P0, constants);
+error_CKF_onlynoise = (X_CKF_onlynoise + dx_CKF_onlynoise) - S(:,1:n)';
+[X_CKF_dx0noise, dx_CKF_dx0noise, P_CKF_dx0noise, y_CKF_dx0noise, alpha_CKF_dx0noise] = CKF(t, Y_simulated, R, X0, dx0, P0, constants);
+error_CKF_dx0noise = (X_CKF_dx0noise + dx_CKF_dx0noise) - S(:,1:n)';
 %% Plotting
 
 % plot simulated measurements
 figure
 subplot(2,1,1)
 sgtitle("Simulated Measurements")
-scatter(Y_onlynoise(idx1, 1), Y_onlynoise(idx1, 3), '.')
+scatter(Y_simulated(idx1, 1), Y_simulated(idx1, 3), '.')
 hold on
-scatter(Y_onlynoise(idx2, 1), Y_onlynoise(idx2, 3), '.')
-scatter(Y_onlynoise(idx3, 1), Y_onlynoise(idx3, 3), '.')
+scatter(Y_simulated(idx2, 1), Y_simulated(idx2, 3), '.')
+scatter(Y_simulated(idx3, 1), Y_simulated(idx3, 3), '.')
 legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
 xlabel('Time [s]')
 ylabel("Range ($\rho$) [km]", 'Interpreter', 'latex')
 grid on
 subplot(2,1,2)
-scatter(Y_onlynoise(idx1, 1), Y_onlynoise(idx1, 4), '.')
+scatter(Y_simulated(idx1, 1), Y_simulated(idx1, 4), '.')
 hold on
-scatter(Y_onlynoise(idx2, 1), Y_onlynoise(idx2, 4), '.')
-scatter(Y_onlynoise(idx3, 1), Y_onlynoise(idx3, 4), '.')
+scatter(Y_simulated(idx2, 1), Y_simulated(idx2, 4), '.')
+scatter(Y_simulated(idx3, 1), Y_simulated(idx3, 4), '.')
 legend('Station 1', 'Station 2', 'Station 3', 'Location', 'northeast')
 xlabel('Time [s]')
 ylabel("Range Rate ($\dot{\rho}$) [km/s]", 'Interpreter', 'latex')
 grid on
 
 % Plot Residuals
-titles = ["Pre-Fit Residuals vs. Time (no perturbation + no noise)", "Post-Fit Residuals vs. Time (no perturbation + no noise)"];
+titles = ["Pre-Fit Residuals vs. Time (Ideal)", "Post-Fit Residuals vs. Time (no perturbation + no noise)"];
 plotResiduals(t, y_CKF_ideal, alpha_CKF_ideal, noise_sd, titles)
 titles = ["Pre-Fit Residuals vs. Time (no perturbation + noise)", "Post-Fit Residuals vs. Time (no perturbation + noise)"];
 plotResiduals(t, y_CKF_onlynoise, alpha_CKF_onlynoise, noise_sd, titles)
 
 % Plot Error vs time and 3 sigma bounds
-% plotErrorAndBounds(error_CKF_ideal, P_CKF_ideal)
-% plotErrorAndBounds(error_CKF_onlynoise, P_CKF_onlynoise)
+plotErrorAndBounds(t, error_CKF_ideal, P_CKF_ideal, "Error vs Time (Ideal)")
+plotErrorAndBounds(t, error_CKF_onlynoise, P_CKF_onlynoise, "Error vs Time (no perturbation + noise)")
+plotErrorAndBounds(t, error_CKF_dx0noise, P_CKF_dx0noise, "Error vs Time (no perturbation + noise)")
