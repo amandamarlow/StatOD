@@ -8,15 +8,15 @@ S0 = [X_t1; reshape(STM_t1,[],1)];
 
 % simulate of reference trajectory
 options = odeset('RelTol',1e-12,'AbsTol',1e-12);
-[~,S] = ode45(@(t,S) orbitODE(t,S,constants), tspan, S0, options);
+[~,S] = ode45(@(t,S) hw2ODE(t,S,n,constants), tspan, S0, options);
 
 % STM
-flatSTM = S(end,n:end);
-STM = reshape(flatSTM',9,9,[]);
+flatSTM = S(end,n+1:end);
+STM_t2 = reshape(flatSTM',n,n,[]);
 
 % return
 X_t2 = S(end,1:n)';
-STM_t2 = STM(:,:,end);
+% STM_t2 = STM(:,:,end);
 
 end
 

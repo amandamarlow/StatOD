@@ -12,11 +12,11 @@ options = odeset('RelTol',1e-12,'AbsTol',1e-12);
 
 % STM
 flatSTM = S(end,n+1:end);
-STM = reshape(flatSTM',n,n,[]);
+STM_t2 = reshape(flatSTM',n,n,[]);
 
 % return
 X_t2 = S(end,1:n)';
-STM_t2 = STM(:,:,end);
+% STM_t2 = STM(:,:,end);
 
 end
 
