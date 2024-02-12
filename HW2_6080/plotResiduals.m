@@ -4,7 +4,7 @@ function [] = plotResiduals(t, y, alpha, noise_sd, titles)
 
 figure
 subplot(2,1,1)
-sgtitle(titles(1))
+sgtitle(titles(1), 'Interpreter', 'latex')
 scatter(t, y(1,:), '.')
 hold on
 yline(3*noise_sd(1), 'r--')
@@ -21,7 +21,7 @@ xlabel("Time [s]")
 
 figure
 subplot(2,1,1)
-sgtitle(titles(2))
+sgtitle(titles(2), 'Interpreter', 'latex')
 scatter(t, alpha(1,:), '.')
 hold on
 yline(3*noise_sd(1), 'r--')
