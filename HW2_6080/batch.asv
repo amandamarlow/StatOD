@@ -1,4 +1,4 @@
-function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, dx0, P0, constants)
+function [X, dx0, P, y, alpha, iterations] = batch(t, Ymat, R, X0, dx0, P0, constants)
 %Classic/Linearized Kalman Filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -66,9 +66,8 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
                     end
                 end  
             end
-            alpha(:,i) = y(:,i) - H(:,:,i)*diffx0(:,end); % post-fit residual
         end
-        RMSresidual(:,q) = sqrt(1/length(t)*sum([alpha(1,~isnan(alpha(1,:)));alpha(2,~isnan(alpha(2,:)))] .^2, 2));
+
         % has the process converged?
         if all(abs(diffx0(:,q))./(diag(P0(:,:,1).^(1/2))) <= 0.01)
 %         if all(abs(diffx0(:,q))./(diag(P0(:,:,q)).^1/2) <= 0.1)
@@ -83,14 +82,13 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
         dx0(:,q+1) = dx0(:,q) - diffx0(:,q+1);
         P0(:,:,q+1) = A^-1;
         X(:,1) = X(:,1) + diffx0(:,q+1);
-        
     end
     for i = 2:length(t)
 %         [X(:,i), STM(:,:,i)] = integrateTrajectorySTM(t(i-1), t(i), X(:,i-1), STM(:,:,i-1), constants);
         P(:,:,i) = STM(:,:,i)*P0(:,:,end)*STM(:,:,i).';
-%         P(:,:,i) = STM(:,:,i)*P0(:,:,1)*STM(:,:,i).';
+        P(:,:,i) = STM(:,:,i)*P0(:,:,1)*STM(:,:,i).';
 %         alpha(:,i) = y(:,i) - H(:,:,i)*dx0(:,end); % post-fit residual
-%         alpha(:,i) = y(:,i) - H(:,:,i)*diffx0(:,end); % post-fit residual
+        alpha(:,i) = y(:,i) - H(:,:,i)*diffx0(:,end); % post-fit residual
     end
 end
 

@@ -1,4 +1,4 @@
-function [X, P, y, alpha] = EKF(t, Ymat, R, X0, P0, constants)
+function [X, P, y, alpha] = EKF(t, Ymat, R, X0, P0, warmStart, constants)
 %Extended Kalman Filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -16,7 +16,17 @@ function [X, P, y, alpha] = EKF(t, Ymat, R, X0, P0, constants)
     X(:,1) = X0;
     P(:,:,1) = P0;
 %     STM = eye(n);
-    for i = 2:length(t)
+    tfirst = 2;
+    nw = 10; % number of measurements processed as an LKF
+    if warmStart
+        twarm = t(t<=Ymat(nw,1));
+        numtw = length(twarm);
+        dx0 = 0;
+        [Xwarm, dxwarm, P(:,:,1:numtw), y(:,1:numtw), alpha(:,1:numtw)] = CKF(twarm, Ymat(1:nw,:), R(:,:,1:nw), X0, dx0, P0, constants);
+        X(:,1:nw) = Xwarm+dxwarm;
+        tfirst = numtw+1;
+    end
+    for i = tfirst:length(t)
         %% Integrate reference trajectory and STM from t(i-1) to t(i)
         [X(:,i), STM] = integrateTrajectorySTM(t(i-1), t(i), X(:,i-1), eye(n), constants);
         %% Time update
