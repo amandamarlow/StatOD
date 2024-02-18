@@ -78,14 +78,21 @@ idx3 = find(Y_simulated(:,2)==3);
 % [J3range_observations, J3rangeRate_observations, J3elevations_byStation, J3elevations_all] = simMeas(tJ3, SJ3', [r_s1_E,r_s2_E,r_s3_E], constants);
 % YJ3_simulated = [J3range_observations(:,1:2), J3range_observations(:,3) + range_noise(1:length(J3range_observations)), J3rangeRate_observations(:,3) + rangeRate_noise(1:length(J3range_observations))]; % [t(s), station#, range measurement, range rate measurement]
 load("YJ3_simulated.mat")
+
+% Y_simulated = Y_simulated(1:ceil(end/2), :);
+% YJ3_simulated = YJ3_simulated(1:ceil(end/2), :);
 %% Implement Filters
 
 n = 6; % length of state vector
 m = length(Y_simulated);
 X0 = S0(1:n);
 dx0_ideal = zeros(n,1);
-dx0 = [0.5; 0.5; 0.5; 0.5e-3; 0.5e-3; 0.5e-3];
+% dx0 = [0.5; 0.5; 0.5; 0.5e-3; 0.5e-3; 0.5e-3];
+% dx0 = [1.2; 1.2; 1.2; 1.2e-3; 1.2e-3; 1.2e-3];
+dx0 = [3; 3; 3; 3e-3; 3e-3; 3e-3];
+% dx0 = 100*[0.5; 0.5; 0.5; 0.5e-3; 0.5e-3; 0.5e-3];
 P0 = blkdiag(eye(3), (1e-3)^2*eye(3));
+% P0 = blkdiag(1000^2*eye(3), eye(3));
 R = zeros(2,2,m);
 R(1,1,:) = (noise_sd(1))^2;
 R(2,2,:) = (noise_sd(2))^2;
@@ -95,12 +102,12 @@ R(2,2,:) = (noise_sd(2))^2;
 
 % [X_CKF_ideal, dx_CKF_ideal, P_CKF_ideal, y_CKF_ideal, alpha_CKF_ideal] = CKF(t, Y_ideal, R, X0, dx0_ideal, P0, constants);
 % error_CKF_ideal = (X_CKF_ideal + dx_CKF_ideal) - S(:,1:n)';
-[X_CKF_onlynoise, dx_CKF_onlynoise, P_CKF_onlynoise, y_CKF_onlynoise, alpha_CKF_onlynoise] = CKF(t, Y_simulated, R, X0, dx0_ideal, P0, constants);
-error_CKF_onlynoise = (X_CKF_onlynoise + dx_CKF_onlynoise) - S(:,1:n)';
+% [X_CKF_onlynoise, dx_CKF_onlynoise, P_CKF_onlynoise, y_CKF_onlynoise, alpha_CKF_onlynoise] = CKF(t, Y_simulated, R, X0, dx0_ideal, P0, constants);
+% error_CKF_onlynoise = (X_CKF_onlynoise + dx_CKF_onlynoise) - S(:,1:n)';
 [X_CKF_dx0noise, dx_CKF_dx0noise, P_CKF_dx0noise, y_CKF_dx0noise, alpha_CKF_dx0noise] = CKF(t, Y_simulated, R, X0+dx0, dx0_ideal, P0, constants);
 error_CKF_dx0noise = (X_CKF_dx0noise + dx_CKF_dx0noise) - S(:,1:n)';
-[X_CKF_J3dx0noise, dx_CKF_J3dx0noise, P_CKF_J3dx0noise, y_CKF_J3dx0noise, alpha_CKF_J3dx0noise] = CKF(t, YJ3_simulated, R, X0+dx0, dx0_ideal, P0, constants);
-error_CKF_J3dx0noise = (X_CKF_J3dx0noise + dx_CKF_J3dx0noise) - SJ3(:,1:n)';
+% [X_CKF_J3dx0noise, dx_CKF_J3dx0noise, P_CKF_J3dx0noise, y_CKF_J3dx0noise, alpha_CKF_J3dx0noise] = CKF(t, YJ3_simulated, R, X0+dx0, dx0_ideal, P0, constants);
+% error_CKF_J3dx0noise = (X_CKF_J3dx0noise + dx_CKF_J3dx0noise) - SJ3(:,1:n)';
 
 % get RMS
 [row,~] = find(Y_simulated(:,2) ~= Y_simulated(1,2), 1);
@@ -112,31 +119,31 @@ RMSerror_CKF_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_CKF_dx0noise(1:
 RMSresidual_CKF = sqrt(1/length(t)*sum([alpha_CKF_dx0noise(1,~isnan(alpha_CKF_dx0noise(1,:)));alpha_CKF_dx0noise(2,~isnan(alpha_CKF_dx0noise(2,:)))] .^2, 2));
 RMSresidual_CKF_afterPass = sqrt(1/sum(dataTime)*sum([alpha_CKF_dx0noise(1,dataTime' & ~isnan(alpha_CKF_dx0noise(1,:))); alpha_CKF_dx0noise(2,dataTime' & ~isnan(alpha_CKF_dx0noise(2,:)))].^2, 2));
 
-%J3
-[row,col] = find(Y_simulated(:,2) ~= Y_simulated(1,2), 1);
-dataTime = t > YJ3_simulated(row,1);
-RMSerrorJ3_CKF_component = sqrt(1/length(t)*sum(error_CKF_J3dx0noise.^2, 2));
-RMSerrorJ3_CKF_component_afterPass = sqrt(1/sum(dataTime)*sum(error_CKF_J3dx0noise(:,dataTime).^2, 2));
-RMSerrorJ3_CKF_3D = sqrt(1/length(t)*sum([norm(error_CKF_J3dx0noise(1:3,:));norm(error_CKF_J3dx0noise(4:6,:))].^2, 2));
-RMSerrorJ3_CKF_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_CKF_J3dx0noise(1:3,dataTime));norm(error_CKF_J3dx0noise(4:6,dataTime))].^2, 2));
-RMSresidualJ3_CKF = sqrt(1/length(t)*sum([alpha_CKF_J3dx0noise(1,~isnan(alpha_CKF_J3dx0noise(1,:)));alpha_CKF_J3dx0noise(2,~isnan(alpha_CKF_J3dx0noise(2,:)))] .^2, 2));
-RMSresidualJ3_CKF_afterPass = sqrt(1/sum(dataTime)*sum([alpha_CKF_J3dx0noise(1,dataTime' & ~isnan(alpha_CKF_J3dx0noise(1,:))); alpha_CKF_J3dx0noise(2,dataTime' & ~isnan(alpha_CKF_J3dx0noise(2,:)))].^2, 2));
+% %J3
+% [row,col] = find(Y_simulated(:,2) ~= Y_simulated(1,2), 1);
+% dataTime = t > YJ3_simulated(row,1);
+% RMSerrorJ3_CKF_component = sqrt(1/length(t)*sum(error_CKF_J3dx0noise.^2, 2));
+% RMSerrorJ3_CKF_component_afterPass = sqrt(1/sum(dataTime)*sum(error_CKF_J3dx0noise(:,dataTime).^2, 2));
+% RMSerrorJ3_CKF_3D = sqrt(1/length(t)*sum([norm(error_CKF_J3dx0noise(1:3,:));norm(error_CKF_J3dx0noise(4:6,:))].^2, 2));
+% RMSerrorJ3_CKF_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_CKF_J3dx0noise(1:3,dataTime));norm(error_CKF_J3dx0noise(4:6,dataTime))].^2, 2));
+% RMSresidualJ3_CKF = sqrt(1/length(t)*sum([alpha_CKF_J3dx0noise(1,~isnan(alpha_CKF_J3dx0noise(1,:)));alpha_CKF_J3dx0noise(2,~isnan(alpha_CKF_J3dx0noise(2,:)))] .^2, 2));
+% RMSresidualJ3_CKF_afterPass = sqrt(1/sum(dataTime)*sum([alpha_CKF_J3dx0noise(1,dataTime' & ~isnan(alpha_CKF_J3dx0noise(1,:))); alpha_CKF_J3dx0noise(2,dataTime' & ~isnan(alpha_CKF_J3dx0noise(2,:)))].^2, 2));
 
 % % Plot Residuals
 % titles = ["CKF Pre-Fit Residuals vs. Time (Ideal)", "CKF Post-Fit Residuals vs. Time (Ideal)"];
 % plotResiduals(t, y_CKF_ideal, alpha_CKF_ideal, noise_sd, titles)
-titles = ["CKF Pre-Fit Residuals vs. Time (noise)", "CKF Post-Fit Residuals vs. Time (noise)"];
-plotResiduals(t, y_CKF_onlynoise, alpha_CKF_onlynoise, noise_sd, titles)
+% titles = ["CKF Pre-Fit Residuals vs. Time (noise)", "CKF Post-Fit Residuals vs. Time (noise)"];
+% plotResiduals(t, y_CKF_onlynoise, alpha_CKF_onlynoise, noise_sd, titles)
 titles = ["CKF Pre-Fit Residuals vs. Time ($\delta x_0$ + noise)", "CKF Post-Fit Residuals vs. Time ($\delta x_0$ + noise)"];
 plotResiduals(t, y_CKF_dx0noise, alpha_CKF_dx0noise, noise_sd, titles)
-titles = ["CKF Pre-Fit Residuals vs. Time (J3 + $\delta x_0$ + noise)", "CKF Post-Fit Residuals vs. Time (J3 + $\delta x_0$ + noise)"];
-plotResiduals(t, y_CKF_J3dx0noise, alpha_CKF_J3dx0noise, noise_sd, titles)
+% titles = ["CKF Pre-Fit Residuals vs. Time (J3 + $\delta x_0$ + noise)", "CKF Post-Fit Residuals vs. Time (J3 + $\delta x_0$ + noise)"];
+% plotResiduals(t, y_CKF_J3dx0noise, alpha_CKF_J3dx0noise, noise_sd, titles)
 
 % % Plot Error vs time and 3 sigma bounds
 % plotErrorAndBounds(t, error_CKF_ideal, P_CKF_ideal, "CKF Error vs Time (Ideal)")
-plotErrorAndBounds(t, error_CKF_onlynoise, P_CKF_onlynoise, "CKF Error vs Time (no perturbation + noise)")
+% plotErrorAndBounds(t, error_CKF_onlynoise, P_CKF_onlynoise, "CKF Error vs Time (no perturbation + noise)")
 plotErrorAndBounds(t, error_CKF_dx0noise, P_CKF_dx0noise, "CKF Error vs Time ($\delta x_0$ + noise)")
-plotErrorAndBounds(t, error_CKF_J3dx0noise, P_CKF_J3dx0noise, "CKF Error vs Time (J3 + $\delta x_0$ + noise)")
+% plotErrorAndBounds(t, error_CKF_J3dx0noise, P_CKF_J3dx0noise, "CKF Error vs Time (J3 + $\delta x_0$ + noise)")
 
 
 %% EKF - Extended Kalman Filter
@@ -147,8 +154,8 @@ plotErrorAndBounds(t, error_CKF_J3dx0noise, P_CKF_J3dx0noise, "CKF Error vs Time
 % error_EKF_onlynoise = X_EKF_onlynoise - S(:,1:n)';
 [X_EKF_dx0noise, P_EKF_dx0noise, y_EKF_dx0noise, alpha_EKF_dx0noise] = EKF(t, Y_simulated, R, X0+dx0, P0, 1, constants);
 error_EKF_dx0noise = X_EKF_dx0noise - S(:,1:n)';
-[X_EKF_J3dx0noise, P_EKF_J3dx0noise, y_EKF_J3dx0noise, alpha_EKF_J3dx0noise] = EKF(t, YJ3_simulated, R, X0+dx0, P0, 1, constants);
-error_EKF_J3dx0noise = X_EKF_J3dx0noise - SJ3(:,1:n)';
+% [X_EKF_J3dx0noise, P_EKF_J3dx0noise, y_EKF_J3dx0noise, alpha_EKF_J3dx0noise] = EKF(t, YJ3_simulated, R, X0+dx0, P0, 1, constants);
+% error_EKF_J3dx0noise = X_EKF_J3dx0noise - SJ3(:,1:n)';
 
 % get RMS
 [row,~] = find(Y_simulated(:,2) ~= Y_simulated(1,2), 1);
@@ -160,15 +167,15 @@ RMSerror_EKF_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_EKF_dx0noise(1:
 RMSresidual_EKF = sqrt(1/length(t)*sum([alpha_EKF_dx0noise(1,~isnan(alpha_EKF_dx0noise(1,:)));alpha_EKF_dx0noise(2,~isnan(alpha_EKF_dx0noise(2,:)))] .^2, 2));
 RMSresidual_EKF_afterPass = sqrt(1/sum(dataTime)*sum([alpha_EKF_dx0noise(1,dataTime' & ~isnan(alpha_EKF_dx0noise(1,:))); alpha_EKF_dx0noise(2,dataTime' & ~isnan(alpha_EKF_dx0noise(2,:)))].^2, 2));
 
-% %J3
-[row,~] = find(YJ3_simulated(:,2) ~= YJ3_simulated(1,2), 1);
-dataTime = t > YJ3_simulated(row,1);
-RMSerrorJ3_EKF_component = sqrt(1/length(t)*sum(error_EKF_J3dx0noise.^2, 2));
-RMSerrorJ3_EKF_component_afterPass = sqrt(1/sum(dataTime)*sum(error_EKF_J3dx0noise(:,dataTime).^2, 2));
-RMSerrorJ3_EKF_3D = sqrt(1/length(t)*sum([norm(error_EKF_J3dx0noise(1:3,:));norm(error_EKF_J3dx0noise(4:6,:))].^2, 2));
-RMSerrorJ3_EKF_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_EKF_J3dx0noise(1:3,dataTime));norm(error_EKF_J3dx0noise(4:6,dataTime))].^2, 2));
-RMSresidualJ3_EKF = sqrt(1/length(t)*sum(alpha_EKF_J3dx0noise(~isnan(alpha_EKF_J3dx0noise)).^2, 2));
-RMSresidualJ3_EKF_afterPass = sqrt(1/sum(dataTime)*sum(alpha_EKF_J3dx0noise([dataTime';dataTime'] & ~isnan(alpha_EKF_J3dx0noise)).^2, 2));
+% % %J3
+% [row,~] = find(YJ3_simulated(:,2) ~= YJ3_simulated(1,2), 1);
+% dataTime = t > YJ3_simulated(row,1);
+% RMSerrorJ3_EKF_component = sqrt(1/length(t)*sum(error_EKF_J3dx0noise.^2, 2));
+% RMSerrorJ3_EKF_component_afterPass = sqrt(1/sum(dataTime)*sum(error_EKF_J3dx0noise(:,dataTime).^2, 2));
+% RMSerrorJ3_EKF_3D = sqrt(1/length(t)*sum([norm(error_EKF_J3dx0noise(1:3,:));norm(error_EKF_J3dx0noise(4:6,:))].^2, 2));
+% RMSerrorJ3_EKF_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_EKF_J3dx0noise(1:3,dataTime));norm(error_EKF_J3dx0noise(4:6,dataTime))].^2, 2));
+% RMSresidualJ3_EKF = sqrt(1/length(t)*sum([alpha_EKF_J3dx0noise(1,~isnan(alpha_EKF_J3dx0noise(1,:)));alpha_EKF_J3dx0noise(2,~isnan(alpha_EKF_J3dx0noise(2,:)))] .^2, 2));
+% RMSresidualJ3_EKF_afterPass = sqrt(1/sum(dataTime)*sum([alpha_EKF_J3dx0noise(1,dataTime' & ~isnan(alpha_EKF_J3dx0noise(1,:))); alpha_EKF_J3dx0noise(2,dataTime' & ~isnan(alpha_EKF_J3dx0noise(2,:)))].^2, 2));
 
 % % % Plot Residuals
 % % titles = ["EKF Pre-Fit Residuals vs. Time (Ideal)", "EKF Post-Fit Residuals vs. Time (Ideal)"];
@@ -177,14 +184,14 @@ RMSresidualJ3_EKF_afterPass = sqrt(1/sum(dataTime)*sum(alpha_EKF_J3dx0noise([dat
 % plotResiduals(t, y_EKF_onlynoise, alpha_EKF_onlynoise, noise_sd, titles)
 titles = ["EKF Pre-Fit Residuals vs. Time ($\delta x_0 + noise$)", "EKF Post-Fit Residuals vs. Time ($\delta x_0$ + noise)"];
 plotResiduals(t, y_EKF_dx0noise, alpha_EKF_dx0noise, noise_sd, titles)
-titles = ["EKF Pre-Fit Residuals vs. Time (J3 + $\delta x_0 + noise$)", "EKF Post-Fit Residuals vs. Time (J3 + $\delta x_0$ + noise)"];
-plotResiduals(t, y_EKF_J3dx0noise, alpha_EKF_J3dx0noise, noise_sd, titles)
+% titles = ["EKF Pre-Fit Residuals vs. Time (J3 + $\delta x_0 + noise$)", "EKF Post-Fit Residuals vs. Time (J3 + $\delta x_0$ + noise)"];
+% plotResiduals(t, y_EKF_J3dx0noise, alpha_EKF_J3dx0noise, noise_sd, titles)
 
 % Plot Error vs time and 3 sigma bounds
 % % plotErrorAndBounds(t, error_EKF_ideal, P_EKF_ideal, "EKF Error vs Time (Ideal)")
 % plotErrorAndBounds(t, error_EKF_onlynoise, P_EKF_onlynoise, "EKF Error vs Time (noise)")
 plotErrorAndBounds(t, error_EKF_dx0noise, P_EKF_dx0noise, "EKF Error vs Time ($\delta x_0 + noise$)")
-plotErrorAndBounds(t, error_EKF_J3dx0noise, P_EKF_J3dx0noise, "EKF Error vs Time (J3 + $\delta x_0 + noise$)")
+% plotErrorAndBounds(t, error_EKF_J3dx0noise, P_EKF_J3dx0noise, "EKF Error vs Time (J3 + $\delta x_0 + noise$)")
 
 
 %% Batch Filter
@@ -207,7 +214,7 @@ RMSerror_batch_3D_afterPass = sqrt(1/sum(dataTime)*sum([norm(error_batch_dx0nois
 RMSresidual_batch = sqrt(1/length(t)*sum([alpha_batch_dx0noise(1,~isnan(alpha_batch_dx0noise(1,:)));alpha_batch_dx0noise(2,~isnan(alpha_batch_dx0noise(2,:)))] .^2, 2));
 RMSresidual_batch_afterPass = sqrt(1/sum(dataTime)*sum([alpha_batch_dx0noise(1,dataTime' & ~isnan(alpha_batch_dx0noise(1,:))); alpha_batch_dx0noise(2,dataTime' & ~isnan(alpha_batch_dx0noise(2,:)))].^2, 2));
 
-%J3
+% % J3
 % [row,~] = find(Y_simulated(:,2) ~= Y_simulated(1,2), 1);
 % dataTime = t > YJ3_simulated(row,1);
 % RMSerrorJ3_batch_component = sqrt(1/length(t)*sum(error_batch_J3dx0noise.^2, 2));
