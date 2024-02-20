@@ -7,7 +7,6 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
 %   P0 = error covatiance associated with dx0
 
     % Preallocate
-%     t = Ymat(:,1); % time after epoch [s] corresponds to measurement vector
     n = length(X0);
     X = zeros(n, length(t));
     P = zeros(n, n, length(t));
@@ -25,7 +24,6 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
     for q = 1:max_iterations  
         % change this to finite number or current diff - prev diff over covariance < 0.01 sigma
         %% Initialize Iteration
-%         STM = eye(n);
         % or calculate rms of prefit and postfit residuals every loop and
         if min(Ymat(:,1)) == t(1)
             Y = Ymat(1,3:4)';
@@ -36,9 +34,8 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
             N = H(:,:,1).'*(R(:,:,1)^-1)*y(:,1);       
         else
             A = P0(:,:,1)^-1; % Information Matrix
-            N = P0(:,:,1)^-1*dx0(:,q);
+            N = P0(:,:,1)\dx0(:,q);
         end
-        % compare and stop if small
         for i = 2:length(t)
             %% Integrate reference trajectory and STM from t(i-1) to t(i)
             [X(:,i), STM(:,:,i)] = integrateTrajectorySTM(t(i-1), t(i), X(:,i-1), STM(:,:,i-1), constants);
@@ -80,7 +77,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
             warning("Failed to converge in %d iterations", max_iterations);
         end
         % solve normal equations
-        diffx0(:,q+1) = inv(A)*N;
+        diffx0(:,q+1) = A\N;
         dx0(:,q+1) = dx0(:,q) - diffx0(:,q+1);
         P0(:,:,q+1) = A^-1;
         X(:,1) = X(:,1) + diffx0(:,q+1);
