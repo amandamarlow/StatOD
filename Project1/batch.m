@@ -22,18 +22,17 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
     diffx0(:,1) = ones(n,1);
     max_iterations = 8;
     for q = 1:max_iterations  
-        % change this to finite number or current diff - prev diff over covariance < 0.01 sigma
         %% Initialize Iteration
         % or calculate rms of prefit and postfit residuals every loop and
         if min(Ymat(:,1)) == t(1)
             Y = Ymat(1,3:4)';
             stationNum = Ymat(1,2);
             [GofXt0, H(:,:,1)] = GandH(t(1), X(:,1), stationNum, constants); % STM at t0 is I
-            A = P0(:,:,1)^-1 + H(:,:,1).'*(R(:,:,1)^-1)*H(:,:,1); % Information Matrix
+            A = inv(P0(:,:,1)) + H(:,:,1).'*(R(:,:,1)\H(:,:,1)); % Information Matrix
             y(:,1) = Y - GofXt0; % pre-fit residual
-            N = H(:,:,1).'*(R(:,:,1)^-1)*y(:,1);       
+            N = H(:,:,1).'*(R(:,:,1)\y(:,1));       
         else
-            A = P0(:,:,1)^-1; % Information Matrix
+            A = inv(P0(:,:,1)); % Information Matrix
             N = P0(:,:,1)\dx0(:,q);
         end
         for i = 2:length(t)
@@ -58,8 +57,8 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
 %                         alpha(:,i) = NaN(2,1); % post-fit residual 
                     else
                         y(:,i) = Y - GofXt; % pre-fit residual
-                        A = A + H(:,:,i).'*(R(:,:,j)^-1)*H(:,:,i);
-                        N = N + H(:,:,i).'*(R(:,:,j)^-1)*y(:,i);
+                        A = A + H(:,:,i).'*(R(:,:,j)\H(:,:,i));
+                        N = N + H(:,:,i).'*(R(:,:,j)\y(:,i));
                     end
                 end  
             end
@@ -79,7 +78,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
         % solve normal equations
         diffx0(:,q+1) = A\N;
         dx0(:,q+1) = dx0(:,q) - diffx0(:,q+1);
-        P0(:,:,q+1) = A^-1;
+        P0(:,:,q+1) = inv(A);
         X(:,1) = X(:,1) + diffx0(:,q+1);
         
     end

@@ -30,21 +30,15 @@ function [GofXt, H] = GandH(t, X, stationNum, constants)
    v_stn_N = tilde(omegaE_N)*r_stn_N;       
    S_stn = [r_stn_N; v_stn_N];
 
-   R = r_sc_N - r_stn_N;
-   elevation = asind(dot(R,r_stn_N)/norm(R)/norm(r_stn_N));
+%    R = r_sc_N - r_stn_N;
+%    elevation = asind(dot(R,r_stn_N)/norm(R)/norm(r_stn_N));
 
-%    if  elevation >= 10
-       [range, rangeRate, H_range, H_rangeRate] = Hcalcs(X, S_stn, NE);
+   [range, rangeRate, H_range, H_rangeRate] = Hcalcs(X, S_stn, NE);
 
-       GofXt = [range; rangeRate];
-       
-       H = zeros(2, 18);
-       H(:,1:6) = [H_range(1:6); H_rangeRate(1:6)];
-       H(:,10+3*(stationNum-1):9+3*(stationNum)) = [H_range(7:9); H_rangeRate(7:9)];
-%    else
-%        GofXt = NaN(2,1);
-%        H = NaN(2,n);
-%    end
+   GofXt = [range; rangeRate];
 
+   H = zeros(2, 18);
+   H(:,1:6) = [H_range(1:6); H_rangeRate(1:6)];
+   H(:,10+3*(stationNum-1):9+3*(stationNum)) = [H_range(7:9); H_rangeRate(7:9)];
 end
 

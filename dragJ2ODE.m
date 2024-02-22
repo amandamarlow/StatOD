@@ -82,9 +82,9 @@ amu_Partial_R_N = [
 %     -(z/r^3), 0, 0
 % ];
 amu_Partial_C = [-r_N/r^3, zeros(3, n_const-1)];
-aD_N_partial_R_N = Cd*area*rho/2/m*(tilde(omegaE_N) - 1/H0/r*tilde(omegaE_N)*(r_N*r_N'));
-aD_N_partial_V_N = -rho*Cd*area/2/m*eye(3);
-aD_N_partial_C = [zeros(3,2), -rho*area/2/m*vr_N, zeros(3,9)];
+aD_N_partial_R_N = Cd*area*rho/2/m * (norm(vr_N)*(vr_N*r_N'/H0/r + tilde(omegaE_N)) + vr_N*vr_N'/norm(vr_N)*tilde(omegaE_N));
+aD_N_partial_V_N = -rho*Cd*area/2/m*(vr_N*vr_N'/norm(vr_N) + norm(vr_N)*eye(3));
+aD_N_partial_C = [zeros(3,2), -rho*area/2/m*norm(vr_N)*vr_N, zeros(3,9)];
 
 aJ2_N_partial_R_N = NE*aJ2_E_partial_R_E*EN;
 aJ2_N_partial_C = NE*aJ2_E_partial_C;
