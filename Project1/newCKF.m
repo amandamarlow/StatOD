@@ -1,4 +1,4 @@
-function [X, dx, P, y, alpha] = newCKF(t, data, R, X0, dx0, P0, constants)
+function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, constants)
 %Classic/Linearized Kalman Filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]

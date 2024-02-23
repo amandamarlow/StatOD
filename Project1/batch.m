@@ -20,7 +20,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
     STM(:,:,1) = eye(n);
     
     diffx0(:,1) = ones(n,1);
-    max_iterations = 8;
+    max_iterations = 3;
     for q = 1:max_iterations  
         %% Initialize Iteration
         % or calculate rms of prefit and postfit residuals every loop and

@@ -1,4 +1,4 @@
-function [X, dx0, P, y, alpha, iterations, RMSresidual] = newbatch(t, data, R, X0, dx0, P0, constants)
+function [X, dx0, P, y, alpha, iterations, RMSresidual] = newbatch(data, R, X0, dx0, P0, constants)
 %Batch filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -22,7 +22,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = newbatch(t, data, R, X
     P0est = P0;
     
     diffx0(:,1) = ones(n,1);
-    max_iterations = 8;
+    max_iterations = 10;
     for q = 1:max_iterations  
         %% Initialize Iteration
         % or calculate rms of prefit and postfit residuals every loop and
@@ -48,7 +48,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = newbatch(t, data, R, X
             N = N + H(:,:,i).'*(R(:,:,i)\y(:,i));
             alpha(:,i) = y(:,i) - H(:,:,i)*diffx0(:,end); % post-fit residual
         end
-        RMSresidual(:,q) = sqrt(1/length(t)*sum([alpha(1,~isnan(alpha(1,:)));alpha(2,~isnan(alpha(2,:)))] .^2, 2));
+        RMSresidual = sqrt(1/length(t)*sum([alpha(1,:);alpha(2,:)].^2, 2));
         % has the process converged?
 %         if all(abs(diffx0(:,q))./(diag(P0(:,:,1).^(1/2))) <= 0.01)
         if all(abs(diffx0(:,q))./(diag(P0est).^1/2) <= 0.1)

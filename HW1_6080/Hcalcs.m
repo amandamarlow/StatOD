@@ -23,7 +23,7 @@ rangeRatePartialR = (V-Vs)'/range - rangeRate/(range^2)*(R-Rs)';
 rangeRatePartialV = (R-Rs)'/range;
 
 % station location partials
-rangePartialRs = (Rs-R)'/range*ECEF2ECI;
+rangePartialRs = -(R-Rs)'/range*ECEF2ECI;
 rangeRatePartialRs = (-(V-Vs)'/range + rangeRate/(range^2)*(R-Rs)')*ECEF2ECI;
 
 H_range = [rangePartialR, rangePartialV, rangePartialRs];

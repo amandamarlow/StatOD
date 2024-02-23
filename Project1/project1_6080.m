@@ -63,12 +63,14 @@ X0 = [r0_N; v0_N; mu; J2; Cd; R0s1_E; R0s2_E; R0s3_E];
 S0 = [X0; reshape(eye(n),[],1)];
 
 % get time span
-t = data(1,1):20:data(end,1);
+% t = data(1,1):20:data(end,1);
+t = data(:,1);
 
 % simulate of reference trajectory
-% options = odeset('RelTol',1e-12,'AbsTol',1e-12);
-% [t,S] = ode45(@(t,S) dragJ2ODE(t,S,constants), t, S0, options);
-% plotEarthOrbit(S(:,1:3)', ae, "Simulated Reference Trajectory")
+options = odeset('RelTol',1e-12,'AbsTol',1e-12);
+[~,Sref] = ode45(@(t,S) dragJ2ODE(t,S,constants), t, S0, options);
+% plotEarthOrbit(Sref(:,1:3)', ae, "Simulated Reference Trajectory")
+Xref = Sref(:,1:n)';
 
 dx0 = zeros(n,1);
 % P0 = diag([1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e20, 1e6, 1e6, 1e-10, 1e-10, 1e-10, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6]);
@@ -78,12 +80,36 @@ R = zeros(2,2,m);
 R(1,1,:) = (noise_sd(1))^2;
 R(2,2,:) = (noise_sd(2))^2;
 
-% [X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = CKF(t, data, R, X0, dx0, P0, constants);
-[X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = newCKF(t, data, R, X0, dx0, P0, constants);
+%% CKF
+
+[X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = newCKF(data, R, X0, dx0, P0, constants);
 titles = ["CKF Pre-Fit Residuals vs. Time", "CKF Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_CKF, alpha_CKF, noise_sd, titles)
 
-% [X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = batch(t, data, R, X0, dx0, P0, constants);
-[X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = newbatch(t, data, R, X0, dx0, P0, constants);
+RMSresidual_CKF = sqrt(1/length(t)*sum([alpha_CKF(1,:);alpha_CKF(2,:)].^2, 2));
+
+plotDeltaX(t, -dx_CKF, "CKF $\delta x_{LS}$ vs Time")
+plotDeltaXsc(t, -dx_CKF, "CKF $\delta x_{LS}$ vs Time")
+
+CKFtrace = zeros(1,length(t));
+for i = 1:length(t)
+    CKFtrace(i) = trace(P_CKF(1:6,1:6,i));
+end
+figure
+semilogy(t/60^2, CKFtrace)
+title("Trace of the Covariance of Spacecraft State")
+xlabel("time [hours]")
+ylabel("trace(P)  [km^2] & [(km/s)^2]")
+%% Batch
+
+[X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = newbatch(data, R, X0, dx0, P0, constants);
 titles = ["Batch Pre-Fit Residuals vs. Time", "Batch Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_batch, alpha_batch, noise_sd, titles)
+
+deltaX_batch = Xref - X_batch;
+plotDeltaX(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
+plotDeltaXsc(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
+
+% [X_CKF_test, dx_CKF_test, P_CKF_test, y_CKF_test, alpha_CKF_test] = newCKF(data, R, X_batch(:,1), dx0, P0, constants);
+% titles = ["CKF Pre-Fit Residuals vs. Time (from batch)", "CKF Post-Fit Residuals vs. Time (from batch)"];
+% plotResiduals(data(:,1), y_CKF_test, alpha_CKF_test, noise_sd, titles)
