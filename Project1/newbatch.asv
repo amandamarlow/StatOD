@@ -1,4 +1,4 @@
-function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R, X0, dx0, P0, constants)
+function [X, dx0, P, y, alpha, iterations, RMSresidual] = newbatch(data, R, X0, dx0, P0, constants)
 %Batch filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -15,16 +15,16 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
     H = NaN(2, n, length(t));
     y = NaN(2, length(t)); % pre-fit residual
     alpha = NaN(2, length(t)); % post-fit residual
-%     RMSresidual_post = ones(2,1);
+    RMSresidual = ones(2,1);
     
     X(:,1) = X0;
 %     P(:,:,1) = P0;
 %     STM(:,:,1) = eye(n);
     P0est = P0;
     
-    diffx0 = ones(n,1);
+    diffx0 = zeros(n,1);
     max_iterations = 10;
-    for q = 1:max_iterations+1
+    for q = 1:max_iterations  
         %% Initialize Iteration
         % or calculate rms of prefit and postfit residuals every loop and
         if min(data(:,1)) == t(1)
@@ -48,27 +48,25 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
             y(:,i) = Y - GofXt; % pre-fit residual
             A = A + H(:,:,i)'*(R\H(:,:,i));
             N = N + H(:,:,i)'*(R\y(:,i));
-            alpha(:,i) = y(:,i) - H(:,:,i)*diffx0; % post-fit residual
+            alpha(:,i) = y(:,i) - H(:,:,i)*diffx0(:,end); % post-fit residual
         end
-%         RMSresidual_qminus = RMSresidual;
-        RMSresidual_pre = sqrt(1/length(t)*sum(y.^2, 2));
-        RMSresidual_post = sqrt(1/length(t)*sum(alpha.^2, 2));
+        RMSresidual_qminus = RMSresidual;
+        RMSresidual_qminus = RMSresidual;
+        RMSresidual = sqrt(1/length(t)*sum(alpha.^2, 2));
         % has the process converged?
 %         if all(abs(RMSresidual-RMSresidual_qminus) < 0.01*RMSresidual)
-        if all(abs(RMSresidual_post-RMSresidual_pre) < 0.01*RMSresidual_post) && q>1
+        if all(abs(RMSresidual-RMSresidual_qminus) < 0.01*RMSresidual)
 %         if all(abs(diffx0(:,q))./(diag(P0est).^1/2) <= 0.1)
             % should probably converge in 3 for project
             iterations = q;
             break
-        elseif q == max_iterations && q>1
+        elseif q == max_iterations
             iterations = q;
             warning("Failed to converge in %d iterations", max_iterations);
-            break
         end
         % solve normal equations
         diffx0 = A\N;
-%         dx0 = dx0 - diffx0;
-        dx0 = 0;
+        dx0 = dx0 - diffx0;
 %         dx0 = dx0 + diffx0(:,q+1);
         P0est = A\eye(n);
         X(:,1) = X(:,1) + diffx0;
@@ -76,7 +74,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
         
     end
     for i = 2:length(t)
-        P(:,:,i) = STM(:,:,i)*P0est*STM(:,:,i)';
+        P(:,:,i) = STM(:,:,i)*P0est*STM(:,:,i).';
     end
 end
 

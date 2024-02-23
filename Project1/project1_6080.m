@@ -3,7 +3,7 @@ clc
 close all
 
 addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD')
-addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD\HW1_6080')
+% addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD\HW1_6080')
 % addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD\HW2_6080')
 addpath("C:\Users\marlo\MATLAB Drive\6010\RigidBodyKinematics-Matlab\Matlab")
 load("data.txt")
@@ -76,13 +76,14 @@ dx0 = zeros(n,1);
 % P0 = diag([1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e20, 1e6, 1e6, 1e-10, 1e-10, 1e-10, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6]);
 P0 = diag([ones(6,1); 1e-61; 1e6; 1e6; 1e-16*ones(3,1); ones(6,1)]); 
 noise_sd = [1e-5; 1e-6]; % km km/s
-R = zeros(2,2,m);
-R(1,1,:) = (noise_sd(1))^2;
-R(2,2,:) = (noise_sd(2))^2;
+% R = zeros(2,2,length(data(:,1)));
+% R(1,1,:) = (noise_sd(1))^2;
+% R(2,2,:) = (noise_sd(2))^2;
+R = [noise_sd(1)^2, 0; 0, noise_sd(2)^2];
 
 %% CKF
 
-[X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = newCKF(data, R, X0, dx0, P0, constants);
+[X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = newCKF(data, R, X0, dx0, P0, 1, constants);
 titles = ["CKF Pre-Fit Residuals vs. Time", "CKF Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_CKF, alpha_CKF, noise_sd, titles)
 
@@ -100,6 +101,10 @@ semilogy(t/60^2, CKFtrace)
 title("Trace of the Covariance of Spacecraft State")
 xlabel("time [hours]")
 ylabel("trace(P)  [km^2] & [(km/s)^2]")
+
+[X_CKFiterated, dx_CKFiterated, P_CKFiterated, y_CKFiterated, alpha_CKFiterated] = newCKF(data, R, X0, dx0, P0, 20, constants);
+titles = ["Iterated CKF Pre-Fit Residuals vs. Time", "Iterated CKF Post-Fit Residuals vs. Time"];
+plotResiduals(data(:,1), y_CKFiterated, alpha_CKFiterated, noise_sd, titles)
 %% Batch
 
 [X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = newbatch(data, R, X0, dx0, P0, constants);

@@ -29,7 +29,7 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, constan
         stationNum = data(1,2);
         [GofXt, H] = GandH(t(1), X(:,1), stationNum, constants);
         y(:,1) = Y - GofXt; % pre-fit residual
-        alpha(:,1) = y(:,1) - H*dx(:,1); % post-fit residual 
+        alpha(:,1) = y(:,1) - H*dx_ap; % post-fit residual 
         for i = 2:length(t)
             %% Integrate reference trajectory and STM from t(i-1) to t(i)
     %         [Xvec, STMvec] = integrateTrajectorySTM([t(i-1) t(i)], X(:,i-1), eye(n), constants);
@@ -57,7 +57,7 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, constan
         RMSresidual_pre = sqrt(1/length(t)*sum(y.^2, 2));
 %         RMSresidual_post = sqrt(1/length(t)*sum(alpha.^2, 2));
 %         if all(abs(RMSresidual_post-RMSresidual_qminus) < 0.01*RMSresidual_post) && q>1
-        if all(abs(RMSresidual_pre-RMSresidual_qminus) < 0.01*RMSresidual_pre) && q>1
+        if all(abs(RMSresidual_pre-RMSresidual_qminus) < 0.01*RMSresidual_post) && q>1
             fprintf("CKF Converged in %d iterations \n", q)
             break
         elseif q == iterations && iterations>1
@@ -68,8 +68,8 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, constan
         end
         STM = STM_t0(:,:,end);
         diffX0 = STM\dx(:,end);
-%         dx(:,1) = dx(:,1) - diffX0;
-        dx(:,1) = 0;
+        dx(:,1) = dx(:,1) - diffX0;
+%         dx(:,1) = 0;
         X(:,1) = X(:,1) + diffX0;
     end
 
