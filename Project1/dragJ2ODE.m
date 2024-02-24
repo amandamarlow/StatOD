@@ -16,7 +16,8 @@ n = 18; % length of state vector
 n_const = n-6;
 
 r_N = S(1:3);
-r = norm(r_N);
+% r = norm(r_N);
+r = (r_N'*r_N)^(1/2);
 v_N = S(4:6);
 
 mu = S(7);
@@ -30,14 +31,17 @@ Phi = reshape(S(n+1:end),[n,n]);
 
 % DCM for ECI and ECEF frames
 alpha = t*omegaE + theta0;
-EN = Euler3(alpha);
-NE = EN';
+% EN = Euler3(alpha);
+% NE = EN';
+NE = [cos(alpha), -sin(alpha), 0; sin(alpha), cos(alpha), 0; 0, 0, 1];
+EN = NE';
 
 %% All of this section is in ECEF coordinates
 r_E = EN*r_N;
 x = r_E(1);
 y = r_E(2);
 z = r_E(3);
+r = (r_E'*r_E)^(1/2);
 
 % Dynamics
 % a_J2_E = -3*mu*(ae^2)*J2/2/(r^7) * [x*(r^2 - 5*z^2); y*(r^2 - 5*z^2); z*(r^2 + 2*(x^2 + y^2) - 3*z^2)];
@@ -80,6 +84,7 @@ aJ2_E_partial_mu = -3/2*J2/(r^2)*(ae/r)^2*[
 x = r_N(1);
 y = r_N(2);
 z = r_N(3);
+r = (r_N'*r_N)^(1/2);
 
 % drag
 vr_N = v_N - tilde(omegaE_N)*r_N; % atmospheric relative velocity
@@ -104,7 +109,7 @@ amu_Partial_R_N = -mu/r^3*eye(3) + 3*mu/r^5*(r_N*r_N')*eye(3);
 %     -(z/r^3), 0, 0
 % ];
 amu_Partial_C = [-r_N/r^3, zeros(3, n_const-1)];
-aD_N_partial_R_N = Cd*area*rho/2/m * (norm(vr_N)*((vr_N*r_N')/H0/r + tilde(omegaE_N)) + (vr_N*vr_N')/norm(vr_N)*tilde(omegaE_N));
+aD_N_partial_R_N = Cd*area*rho/2/m * (norm(vr_N)*((vr_N*r_N')/H0/r + tilde(omegaE_N)) + (vr_N*vr_N')*tilde(omegaE_N)./norm(vr_N));
 aD_N_partial_V_N = -rho*Cd*area/2/m*(vr_N*vr_N'/norm(vr_N) + norm(vr_N)*eye(3));
 aD_N_partial_C = [zeros(3,2), -rho*area/2/m*norm(vr_N)*vr_N, zeros(3,9)];
 

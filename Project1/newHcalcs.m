@@ -10,14 +10,14 @@ function [range, rangeRate, H_range, H_rangeRate] = newHcalcs(X_sc, X_station, E
 
 R = X_sc(1:3);
 V = X_sc(4:6);
-Rs = X_station(1:3);
+Rs = X_station;
 % Vs = X_station(4:6);
 
 r = (R - ECEF2ECI*Rs);
 v = (V - tilde(omegaE_N)*ECEF2ECI*Rs);
 
 % range = norm(R-Rs);
-range = sqrt(r'*r);
+range = (r'*r)^(1/2);
 rangeRate = r'*v./range;
 
 % spacecraft state partial
@@ -25,13 +25,13 @@ rangeRate = r'*v./range;
 rangePartialR = r'*eye(3)./range;
 rangePartialV = zeros(1,3);
 % rangeRatePartialR = (V-Vs)'/range - rangeRate/(range^2)*(R-Rs)';
-rangeRatePartialR = v'*(eye(3)-r*(r'*eye(3))./(range^2))./range;
+rangeRatePartialR = v'*(eye(3) - r*(r'*eye(3))./(range^2))./range;
 rangeRatePartialV = r'/range*eye(3);
 
 % station location partials
 % rangePartialRs = -(R-Rs)'/range*ECEF2ECI;
 rangePartialRs = -r'*ECEF2ECI*eye(3)./range;
-rangeRatePartialRs = -r'*tilde(omegaE_N)*ECEF2ECI*eye(3)./range + v'*(-ECEF2ECI*eye(3) - r*(r'*(-ECEF2ECI)*eye(3)./range)./range)./range;
+rangeRatePartialRs = -r'*tilde(omegaE_N)*ECEF2ECI*eye(3)./range + (v'*(-ECEF2ECI*eye(3) + r*(r'*ECEF2ECI*eye(3)./range)./range)./range);
 
 H_range = [rangePartialR, rangePartialV, rangePartialRs];
 H_rangeRate = [rangeRatePartialR, rangeRatePartialV, rangeRatePartialRs];

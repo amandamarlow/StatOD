@@ -50,12 +50,12 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, constan
             [GofXt, H] = GandH(t(i), X(:,i), stationNum, constants);
             y(:,i) = Y - GofXt; % pre-fit residual
             K = P_ap*H'/(H*P_ap*H' + R); % kalman gain
-            dx_ap = dx_ap + K*(y(:,i) - H*dx_ap);
-            P_ap = (eye(n) - K*H)*P_ap*(eye(n) - K*H)' + K*R*K';
-            alpha(:,i) = y(:,i) - H*dx_ap; % post-fit residual 
+            dx(:,i) = dx_ap + K*(y(:,i) - H*dx_ap);
+            P(:,:,i) = (eye(n) - K*H)*P_ap*(eye(n) - K*H)' + K*R*K';
+            alpha(:,i) = y(:,i) - H*dx(:,i); % post-fit residual 
 
-            dx(:,i) = dx_ap;
-            P(:,:,i) = P_ap;
+%             dx(:,i) = dx_ap;
+%             P(:,:,i) = P_ap;
         end
 %         RMSresidual_qminus = RMSresidual_post;
         RMSresidual_qminus = RMSresidual_pre;
