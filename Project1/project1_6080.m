@@ -6,8 +6,10 @@ addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD')
 % addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD\HW1_6080')
 % addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD\HW2_6080')
 addpath("C:\Users\marlo\MATLAB Drive\6010\RigidBodyKinematics-Matlab\Matlab")
-load("data.txt")
-data(:,3:4) = data(:,3:4)./1000; % convert to km
+% load("data.txt")
+% data(:,3:4) = data(:,3:4)./1000; % convert to km
+data = load("project.txt");
+data(:,3:4) = data(:,3:4)/1000; % convert to km
 
 % constants 
 % ae = 6378136.3; % [m] mean equitorial radius of earth
@@ -89,8 +91,9 @@ plotResiduals(data(:,1), y_CKF, alpha_CKF, noise_sd, titles)
 
 RMSresidual_CKF = sqrt(1/length(t)*sum([alpha_CKF(1,:);alpha_CKF(2,:)].^2, 2));
 
-plotDeltaX(t, -dx_CKF, "CKF $\delta x_{LS}$ vs Time")
-plotDeltaXsc(t, -dx_CKF, "CKF $\delta x_{LS}$ vs Time")
+deltaX_CKF = Xref - (X_CKF+dx_CKF);
+% plotDeltaX(t, deltaX_CKF, "CKF $\delta x_{LS}$ vs Time")
+plotDeltaXsc(t, deltaX_CKF, "CKF $\delta x_{LS}$ vs Time")
 
 CKFtrace = zeros(1,length(t));
 for i = 1:length(t)
@@ -105,6 +108,9 @@ ylabel("trace(P)  [km^2] & [(km/s)^2]")
 [X_CKFiterated, dx_CKFiterated, P_CKFiterated, y_CKFiterated, alpha_CKFiterated] = newCKF(data, R, X0, dx0, P0, 20, constants);
 titles = ["Iterated CKF Pre-Fit Residuals vs. Time", "Iterated CKF Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_CKFiterated, alpha_CKFiterated, noise_sd, titles)
+deltaX_CKF_iterated = Xref - (X_CKF+dx_CKF);
+% plotDeltaX(t, deltaX_CKF_iterated, "CKF $\delta x_{LS}$ vs Time")
+plotDeltaXsc(t, deltaX_CKF_iterated, "CKF $\delta x_{LS}$ vs Time")
 %% Batch
 
 [X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = newbatch(data, R, X0, dx0, P0, constants);
@@ -112,9 +118,5 @@ titles = ["Batch Pre-Fit Residuals vs. Time", "Batch Post-Fit Residuals vs. Time
 plotResiduals(data(:,1), y_batch, alpha_batch, noise_sd, titles)
 
 deltaX_batch = Xref - X_batch;
-plotDeltaX(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
+% plotDeltaX(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
 plotDeltaXsc(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
-
-% [X_CKF_test, dx_CKF_test, P_CKF_test, y_CKF_test, alpha_CKF_test] = newCKF(data, R, X_batch(:,1), dx0, P0, constants);
-% titles = ["CKF Pre-Fit Residuals vs. Time (from batch)", "CKF Post-Fit Residuals vs. Time (from batch)"];
-% plotResiduals(data(:,1), y_CKF_test, alpha_CKF_test, noise_sd, titles)

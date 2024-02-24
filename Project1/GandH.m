@@ -15,11 +15,11 @@ function [GofXt, H] = GandH(t, X, stationNum, constants)
     omegaE = constants.omegaE;
     omegaE_N = [0;0;omegaE];
     theta0 = constants.theta0;
-    ae = constants.ae;
+%     ae = constants.ae;
 
     r_stn_E = X(10+3*(stationNum-1):9+3*(stationNum));
 
-    r_sc_N = X(1:3);
+%     r_sc_N = X(1:3);
     
     alpha = t*omegaE + theta0;
 %     EN = Euler3(alpha);

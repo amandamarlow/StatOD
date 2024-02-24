@@ -47,19 +47,13 @@ a_J2_E = -3/2*mu/(r^2)*(ae/r)^2*J2*[
     (3 - 5*(z/r)^2)*z/r];
 
 % Jacobians
-aJ2_E_partial_R_E = [
-    -((3 * J2 * ae^2 * (-7*x^2*(x^2+y^2-4*z^2) + r^2*(3*x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2))), (3 * J2 * ae^2 * x*y * (-2*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2)), (3 * J2 * ae^2 * x*z * (8*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2));
-    (3 * J2 * ae^2 * x*y * (-2*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2)), -((3 * J2 * ae^2 * (-7*y^2*(x^2+y^2-4*z^2) + r^2*(x^2+3*y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2))), (3 * J2 * ae^2 * y*z * (8*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2));
-    (3 * J2 * ae^2 * x*z * (-6*r^2 + 21*(x^2+y^2) - 14*z^2) * mu) / (2 * r^8 * sqrt(r^2)), (3 * J2 * ae^2 * y*z * (-6*r^2 + 21*(x^2+y^2) - 14*z^2) * mu) / (2 * r^8 * sqrt(r^2)), (3 * J2 * ae^2 * (21*(x^2+y^2)*z^2 - 14*z^4 - 3*r^2*(x^2+y^2-2*z^2)) * mu) / (2 * r^8 * sqrt(r^2))
-];
-% term1 = -3 * ae^2 * J2 * mu / (2 * r^8 * sqrt(r^2));
-% term2 = 15 * ae^2 * J2 * mu / (2 * r^8 * sqrt(r^2));
-% 
 % aJ2_E_partial_R_E = [
-%     term1 * (r^4 + 35 * x^2 * z^2 - 5 * r^2 * (x^2 + z^2)), term2 * x * y * (r^2 - 7 * z^2), term2 * x * (3 * r^2 * z - 7 * z^3);
-%     term2 * x * y * (r^2 - 7 * z^2), term1 * (r^4 + 35 * y^2 * z^2 - 5 * r^2 * (y^2 + z^2)), term2 * y * (3 * r^2 * z - 7 * z^3);
-%     term2 * x * (3 * r^2 * z - 7 * z^3), term2 * y * (3 * r^2 * z - 7 * z^3), term1 * (3 * r^4 - 30 * r^2 * z^2 + 35 * z^4)
+%     -((3 * J2 * ae^2 * (-7*x^2*(x^2+y^2-4*z^2) + r^2*(3*x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2))), (3 * J2 * ae^2 * x*y * (-2*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2)), (3 * J2 * ae^2 * x*z * (8*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2));
+%     (3 * J2 * ae^2 * x*y * (-2*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2)), -((3 * J2 * ae^2 * (-7*y^2*(x^2+y^2-4*z^2) + r^2*(x^2+3*y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2))), (3 * J2 * ae^2 * y*z * (8*r^2 + 7*(x^2+y^2-4*z^2)) * mu) / (2 * r^8 * sqrt(r^2));
+%     (3 * J2 * ae^2 * x*z * (-6*r^2 + 21*(x^2+y^2) - 14*z^2) * mu) / (2 * r^8 * sqrt(r^2)), (3 * J2 * ae^2 * y*z * (-6*r^2 + 21*(x^2+y^2) - 14*z^2) * mu) / (2 * r^8 * sqrt(r^2)), (3 * J2 * ae^2 * (21*(x^2+y^2)*z^2 - 14*z^4 - 3*r^2*(x^2+y^2-2*z^2)) * mu) / (2 * r^8 * sqrt(r^2))
 % ];
+aJ2_E_partial_R_E = -3/2*mu/(r^2)*(ae/r)^2*J2*[
+    ];
 % aJ2_E_partial_C = [
 %     -((3 * J2 * ae^2 * x * (x^2+y^2-4*z^2)) / (2 * (x^2+y^2+z^2)^(7/2))), -((3 * ae^2 * x * (x^2+y^2-4*z^2) * mu) / (2 * (x^2+y^2+z^2)^(7/2))), zeros(1,n_const-2);
 %     -((3 * J2 * ae^2 * y * (x^2+y^2-4*z^2)) / (2 * (x^2+y^2+z^2)^(7/2))), -((3 * ae^2 * y * (x^2+y^2-4*z^2) * mu) / (2 * (x^2+y^2+z^2)^(7/2))), zeros(1,n_const-2);
@@ -92,19 +86,18 @@ a_J2_N = NE*a_J2_E;
 a_N = a_mu_N + a_J2_N + a_D_N;
 
 % Jacobians
-% amu_Partial_R_N = [
-%     -((sqrt(r^2) * (r^2 - 3*x^2) * mu) / r^6), (3*x*y*mu) / (r^2)^(5/2), (3*x*z*mu) / (r^2)^(5/2);
-%     (3*x*y*mu) / (r^2)^(5/2), -((sqrt(r^2) * (r^2 - 3*y^2) * mu) / r^6), (3*y*z*mu) / (r^2)^(5/2);
-%     (3*x*z*mu) / (r^2)^(5/2), (3*y*z*mu) / (r^2)^(5/2), -((sqrt(r^2) * (r^2 - 3*z^2) * mu) / r^6)
-% ];
-amu_Partial_R_N = -mu/r^3*eye(3) + 3*mu/r^5*(r_N*r_N')*eye(3);
+amu_Partial_R_N = [
+    -((sqrt(r^2) * (r^2 - 3*x^2) * mu) / r^6), (3*x*y*mu) / (r^2)^(5/2), (3*x*z*mu) / (r^2)^(5/2);
+    (3*x*y*mu) / (r^2)^(5/2), -((sqrt(r^2) * (r^2 - 3*y^2) * mu) / r^6), (3*y*z*mu) / (r^2)^(5/2);
+    (3*x*z*mu) / (r^2)^(5/2), (3*y*z*mu) / (r^2)^(5/2), -((sqrt(r^2) * (r^2 - 3*z^2) * mu) / r^6)
+];
 % amu_Partial_C = [
 %     -(x/r^3), 0, 0;
 %     -(y/r^3), 0, 0;
 %     -(z/r^3), 0, 0
 % ];
 amu_Partial_C = [-r_N/r^3, zeros(3, n_const-1)];
-aD_N_partial_R_N = Cd*area*rho/2/m * (norm(vr_N)*((vr_N*r_N')/H0/r + tilde(omegaE_N)) + (vr_N*vr_N')/norm(vr_N)*tilde(omegaE_N));
+aD_N_partial_R_N = Cd*area*rho/2/m * (norm(vr_N)*(vr_N*r_N'/H0/r + tilde(omegaE_N)) + vr_N*vr_N'/norm(vr_N)*tilde(omegaE_N));
 aD_N_partial_V_N = -rho*Cd*area/2/m*(vr_N*vr_N'/norm(vr_N) + norm(vr_N)*eye(3));
 aD_N_partial_C = [zeros(3,2), -rho*area/2/m*norm(vr_N)*vr_N, zeros(3,9)];
 

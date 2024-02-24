@@ -26,7 +26,6 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
     max_iterations = 10;
     for q = 1:max_iterations+1
         %% Initialize Iteration
-        % or calculate rms of prefit and postfit residuals every loop and
         if min(data(:,1)) == t(1)
             Y = data(1,3:4)';
             stationNum = data(1,2);
@@ -53,10 +52,8 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
 %         RMSresidual_qminus = RMSresidual;
         RMSresidual_pre = sqrt(1/length(t)*sum(y.^2, 2));
         RMSresidual_post = sqrt(1/length(t)*sum(alpha.^2, 2));
-        % has the process converged?
 %         if all(abs(RMSresidual-RMSresidual_qminus) < 0.01*RMSresidual)
         if all(abs(RMSresidual_post-RMSresidual_pre) < 0.01*RMSresidual_post) && q>1
-%         if all(abs(diffx0(:,q))./(diag(P0est).^1/2) <= 0.1)
             % should probably converge in 3 for project
             iterations = q;
             break
@@ -67,12 +64,10 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
         end
         % solve normal equations
         diffx0 = A\N;
-%         dx0 = dx0 - diffx0;
-        dx0 = 0;
-%         dx0 = dx0 + diffx0(:,q+1);
+        dx0 = dx0 - diffx0;
+%         dx0 = 0;
         P0est = A\eye(n);
         X(:,1) = X(:,1) + diffx0;
-%         X(:,1) = X(:,1) - diffx0(:,q+1);
         
     end
     for i = 2:length(t)

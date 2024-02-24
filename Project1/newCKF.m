@@ -29,7 +29,12 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, constan
         stationNum = data(1,2);
         [GofXt, H] = GandH(t(1), X(:,1), stationNum, constants);
         y(:,1) = Y - GofXt; % pre-fit residual
+%         K = P0*H'/(H*P0*H' + R); % kalman gain
+%         dx_ap = dx(:,1) + K*(y(:,1) - H*dx(:,1));
+%         P_ap = (eye(n) - K*H)*P0*(eye(n) - K*H)' + K*R*K';
         alpha(:,1) = y(:,1) - H*dx(:,1); % post-fit residual 
+%         dx(:,1) = dx_ap;
+%         P(:,:,1) = P_ap;   
         for i = 2:length(t)
             %% Integrate reference trajectory and STM from t(i-1) to t(i)
     %         [Xvec, STMvec] = integrateTrajectorySTM([t(i-1) t(i)], X(:,i-1), eye(n), constants);
