@@ -73,23 +73,20 @@ options = odeset('RelTol',1e-12,'AbsTol',1e-12);
 Xref = Sref(:,1:n)';
 
 dx0 = zeros(n,1);
-% P0 = diag([1e6, 1e6, 1e6, 1e6, 1e6, 1e6, 1e20, 1e6, 1e6, 1e-10, 1e-10, 1e-10, 1e6, 1e6, 1e6, 1e6, 1e6, 1e6]);
 P0 = diag([ones(6,1); 1e-61; 1e6; 1e6; 1e-16*ones(3,1); ones(6,1)]); 
 noise_sd = [1e-5; 1e-6]; % km km/s
-R = zeros(2,2,length(data(:,1);
-R(1,1,:) = (noise_sd(1))^2;
-R(2,2,:) = (noise_sd(2))^2;
+R = [noise_sd(1)^2, 0; 0, noise_sd(2)^2];
 
 %% CKF
 
-[X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = newCKF(data, R, X0, dx0, P0, 1, constants);
+[X_CKF, dx_CKF, P_CKF, y_CKF, alpha_CKF] = newCKF(data, R, X0, dx0, P0, 1, "both", constants);
 titles = ["CKF Pre-Fit Residuals vs. Time", "CKF Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_CKF, alpha_CKF, noise_sd, titles)
-
 RMSresidual_CKF = sqrt(1/length(t)*sum([alpha_CKF(1,:);alpha_CKF(2,:)].^2, 2));
 
-plotDeltaX(t, -dx_CKF, "CKF $\delta x_{LS}$ vs Time")
-plotDeltaXsc(t, -dx_CKF, "CKF $\delta x_{LS}$ vs Time")
+deltaX_CKF = Xref -(X_CKF+dx_CKF);
+plotDeltaX(t, deltaX_CKF, "CKF $\delta x_{LS}$ vs Time")
+plotDeltaXsc(t, deltaX_CKF, "CKF $\delta x_{LS}$ vs Time")
 
 CKFtrace = zeros(1,length(t));
 for i = 1:length(t)
@@ -101,12 +98,12 @@ title("Trace of the Covariance of Spacecraft State")
 xlabel("time [hours]")
 ylabel("trace(P)  [km^2] & [(km/s)^2]")
 
-[X_CKFiterated, dx_CKFiterated, P_CKFiterated, y_CKFiterated, alpha_CKFiterated] = newCKF(data, R, X0, dx0, P0, 10, constants);
+[X_CKFiterated, dx_CKFiterated, P_CKFiterated, y_CKFiterated, alpha_CKFiterated] = newCKF(data, R, X0, dx0, P0, 20, "both", constants);
 titles = ["Iterated CKF Pre-Fit Residuals vs. Time", "Iterated CKF Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_CKFiterated, alpha_CKFiterated, noise_sd, titles)
 %% Batch
 
-[X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = newbatch(data, R, X0, dx0, P0, constants);
+[X_batch, dx0_batch, P_batch, y_batch, alpha_batch, iterations_batch, RMSresidual_batch] = newbatch(data, R, X0, dx0, P0, 'both', constants);
 titles = ["Batch Pre-Fit Residuals vs. Time", "Batch Post-Fit Residuals vs. Time"];
 plotResiduals(data(:,1), y_batch, alpha_batch, noise_sd, titles)
 
@@ -114,6 +111,150 @@ deltaX_batch = Xref - X_batch;
 plotDeltaX(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
 plotDeltaXsc(t, deltaX_batch, "Batch $\Delta x_{LS}$ vs Time")
 
-% [X_CKF_test, dx_CKF_test, P_CKF_test, y_CKF_test, alpha_CKF_test] = newCKF(data, R, X_batch(:,1), dx0, P0, constants);
-% titles = ["CKF Pre-Fit Residuals vs. Time (from batch)", "CKF Post-Fit Residuals vs. Time (from batch)"];
-% plotResiduals(data(:,1), y_CKF_test, alpha_CKF_test, noise_sd, titles)
+%% Only one measurement type
+
+% CKF -------------------------------------------------------------------
+[X_CKF_range, dx_CKF_range, P_CKF_range, y_CKF_range, alpha_CKF_range] = newCKF(data, R, X0, dx0, P0, 1, "range", constants);
+titles = ["CKF Range Only Pre-Fit Residuals vs. Time", "CKF Range Only Post-Fit Residuals vs. Time"];
+plotRangeResiduals(data(:,1), y_CKF_range, alpha_CKF_range, noise_sd, titles)
+
+[X_CKF_rangeRate, dx_CKF_rangeRate, P_CKF_rangeRate, y_CKF_rangeRate, alpha_CKF_rangeRate] = newCKF(data, R, X0, dx0, P0, 1, "rangeRate", constants);
+titles = ["CKF Range Rate Only Pre-Fit Residuals vs. Time", "CKF Range Rate Only Post-Fit Residuals vs. Time"];
+plotRangeRateResiduals(data(:,1), y_CKF_rangeRate, alpha_CKF_rangeRate, noise_sd, titles)
+
+pos_xlim = 3.2e-5;
+figure
+subplot(1,3,1)
+sgtitle("3 Sigma Position Covariance Ellipses - CKF Limited Measurements")
+hold on
+plotCovEllipse(P_CKF_range(1:2,1:2,end))
+plotCovEllipse(P_CKF_rangeRate(1:2,1:2,end))
+grid on
+legend("Range", "Range Rate");
+xlabel("X [km]")
+ylabel("Y [km]")
+xlim([-pos_xlim pos_xlim])
+axis equal
+hold off
+%---------------------------------
+subplot(1,3,2)
+hold on
+plotCovEllipse(P_CKF_range([1,3],[1,3],end))
+plotCovEllipse(P_CKF_rangeRate([1,3],[1,3],end))
+grid on
+legend("Range", "Range Rate");
+xlabel("X [km]")
+ylabel("Z [km]")
+xlim([-pos_xlim pos_xlim])
+axis equal
+hold off
+%---------------------------------
+subplot(1,3,3)
+hold on
+plotCovEllipse(P_CKF_range([2,3],[2,3],end))
+plotCovEllipse(P_CKF_rangeRate([2,3],[2,3],end))
+grid on
+legend("Range", "Range Rate");
+xlabel("Y [km]")
+ylabel("Z [km]")
+xlim([-pos_xlim pos_xlim])
+axis equal
+hold off
+
+% Batch -------------------------------------------------------------------
+[X_batch_range, dx_batch_range, P_batch_range, y_batch_range, alpha_batch_range] = newbatch(data, R, X0, dx0, P0, "range", constants);
+titles = ["Batch Range Only Pre-Fit Residuals vs. Time", "Batch Range Only Post-Fit Residuals vs. Time"];
+plotRangeResiduals(data(:,1), y_batch_range, alpha_batch_range, noise_sd, titles)
+
+[X_batch_rangeRate, dx_batch_rangeRate, P_batch_rangeRate, y_batch_rangeRate, alpha_batch_rangeRate] = newbatch(data, R, X0, dx0, P0, "rangeRate", constants);
+titles = ["Batch Range Rate Only Pre-Fit Residuals vs. Time", "Batch Range Rate Only Post-Fit Residuals vs. Time"];
+plotRangeRateResiduals(data(:,1), y_batch_rangeRate, alpha_batch_rangeRate, noise_sd, titles)
+
+compareCovariance(P_CKF(1:3, 1:3, end), P_batch(1:3, 1:3, end), ["X [km]", "Y [km]", "Z [km]"], ["CKF", "Batch"], "Batch $3\sigma$ Covariance Ellipses - Limited Measurements" 3.2e-5)
+pos_xlim = 3.2e-5;
+figure
+subplot(1,3,1)
+sgtitle("3 Sigma Position Covariance Ellipses - Batch Limited Measurements")
+hold on
+plotCovEllipse(P_batch_range(1:2,1:2,end))
+plotCovEllipse(P_batch_rangeRate(1:2,1:2,end))
+grid on
+legend("Range", "Range Rate");
+xlabel("X [km]")
+ylabel("Y [km]")
+xlim([-pos_xlim pos_xlim])
+axis equal
+hold off
+%---------------------------------
+subplot(1,3,2)
+hold on
+plotCovEllipse(P_batch_range([1,3],[1,3],end))
+plotCovEllipse(P_batch_rangeRate([1,3],[1,3],end))
+grid on
+legend("Range", "Range Rate");
+xlabel("X [km]")
+ylabel("Z [km]")
+xlim([-pos_xlim pos_xlim])
+axis equal
+hold off
+%---------------------------------
+subplot(1,3,3)
+hold on
+plotCovEllipse(P_batch_range([2,3],[2,3],end))
+plotCovEllipse(P_batch_rangeRate([2,3],[2,3],end))
+grid on
+legend("Range", "Range Rate");
+xlabel("Y [km]")
+ylabel("Z [km]")
+xlim([-pos_xlim pos_xlim])
+axis equal
+hold off
+%% Changing fixed stations
+
+P0 = diag([ones(6,1); 1e-61; 1e6; 1e6; ones(3,1); ones(6,1)]);
+
+% [X_CKF_noFix, dx_CKF_noFix, P_CKF_noFix, y_CKF_noFix, alpha_CKF_noFix] = newCKF(data, R, X0, dx0, P0, 1, "both", constants);
+% titles = ["No Fixed Station CKF Pre-Fit Residuals vs. Time", "No Fixed Station CKF Post-Fit Residuals vs. Time"];
+% plotResiduals(data(:,1), y_CKF_noFix, alpha_CKF_noFix, noise_sd, titles)
+% RMSresidual_CKF_noFix = sqrt(1/length(t)*sum([alpha_CKF_noFix(1,:);alpha_CKF_noFix(2,:)].^2, 2));
+% deltaX_CKF_noFix = Xref -(X_CKF_noFix+dx_CKF_noFix);
+% plotDeltaX(t, deltaX_CKF_noFix, "CKF $\delta x_{LS}$ vs Time")
+
+[X_batch_noFix, dx0_batch_noFix, P_batch_noFix, y_batch_noFix, alpha_batch_noFix, iterations_batch_noFix, RMSresidual_batch_noFix] = newbatch(data, R, X0, dx0, P0, 'both', constants);
+titles = ["No Fixed Station Batch Pre-Fit Residuals vs. Time", "No Fixed Station Batch Post-Fit Residuals vs. Time"];
+plotPostFitResiduals(data(:,1), alpha_batch_noFix, noise_sd, titles)
+% plotDeltaX(t, Xref-X_batch_noFix, "No Fixed Stations Batch $\delta x_{LS}$ vs Time")
+
+% Fix Station 2 ------------------------------------------------------------
+P0 = diag([ones(6,1); 1e-61; 1e6; 1e6; ones(3,1); 1e-16*ones(3,1); ones(3,1)]);
+
+% [X_CKF_fix337, dx_CKF_fix337, P_CKF_fix337, y_CKF_fix337, alpha_CKF_fix337] = newCKF(data, R, X0, dx0, P0, 1, "both", constants);
+% titles = ["337 Fixed CKF Pre-Fit Residuals vs. Time", "337 Fixed CKF Post-Fit Residuals vs. Time"];
+% plotPostFitResiduals(data(:,1), alpha_CKF_fix337, noise_sd, titles)
+% RMSresidual_CKF_fix337 = sqrt(1/length(t)*sum([alpha_CKF_fix337(1,:);alpha_CKF_fix337(2,:)].^2, 2));
+% deltaX_CKF_fix337 = Xref -(X_CKF_fix337+dx_CKF_fix337);
+% plotDeltaX(t, deltaX_CKF_fix337, "337 Fixed CKF $\delta x_{LS}$ vs Time")
+
+[X_batch_fix337, dx0_batch_fix337, P_batch_fix337, y_batch_fix337, alpha_batch_fix337, iterations_batch_fix337, RMSresidual_batch_fix337] = newbatch(data, R, X0, dx0, P0, 'both', constants);
+titles = ["337 Fixed Batch Pre-Fit Residuals vs. Time", "337 Fixed Batch Post-Fit Residuals vs. Time"];
+plotPostFitResiduals(data(:,1), alpha_batch_fix337, noise_sd, titles)
+% plotDeltaX(t, Xref-X_batch_fix337, "337 Fixed Batch $x_{LS}$ vs Time")
+
+% Fix Station 3 ------------------------------------------------------------
+P0 = diag([ones(6,1); 1e-61; 1e6; 1e6; ones(3,1); ones(3,1); 1e-16*ones(3,1)]);
+
+% [X_CKF_fix394, dx_CKF_fix394, P_CKF_fix394, y_CKF_fix394, alpha_CKF_fix394] = newCKF(data, R, X0, dx0, P0, 1, "both", constants);
+% titles = ["394 Fixed CKF Pre-Fit Residuals vs. Time", "394 Fixed CKF Post-Fit Residuals vs. Time"];
+% plotPostFitResiduals(data(:,1), alpha_CKF_fix394, noise_sd, titles)
+% RMSresidual_CKF_fix394 = sqrt(1/length(t)*sum([alpha_CKF_fix394(1,:);alpha_CKF_fix394(2,:)].^2, 2));
+% deltaX_CKF_fix394 = Xref -(X_CKF_fix394+dx_CKF_fix394);
+% plotDeltaX(t, deltaX_CKF_fix394, "394 Fixed CKF $\delta x_{LS}$ vs Time")
+
+[X_batch_fix394, dx0_batch_fix394, P_batch_fix394, y_batch_fix394, alpha_batch_fix394, iterations_batch_fix394, RMSresidual_batch_fix394] = newbatch(data, R, X0, dx0, P0, 'both', constants);
+titles = ["394 Fixed Batch Pre-Fit Residuals vs. Time", "394 Fixed Batch Post-Fit Residuals vs. Time"];
+plotPostFitResiduals(data(:,1), alpha_batch_fix394, noise_sd, titles)
+% plotDeltaX(t, Xref-X_batch_fix394, "394 Fixed Batch $\delta x_{LS}$ vs Time")
+
+%% Plotting
+compareCovariance(P_CKF(1:3, 1:3, end), P_batch(1:3, 1:3, end), ["X [km]", "Y [km]", "Z [km]"], ["CKF", "Batch"], "$3\sigma$ Covariance Ellipses of Position at t_f", 3.2e-5)
+compareCovariance(P_CKF(4:6, 4:6, end), P_batch(4:6, 4:6, end), ["Vx [km/s]", "Vy [km/s]", "Vz [km/s]"], ["CKF", "Batch"], "$3\sigma$ Covariance Ellipses of Velocity at t_f" 5.1e-8)
