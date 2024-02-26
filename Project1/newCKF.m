@@ -27,6 +27,7 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, measure
     %% Initialize
     X(:,1) = X0;
     dx(:,1) = dx0;
+%     dx_ap = dx0;
     P(:,:,1) = P0;
 %     RMSresidual_post = zeros(2,1);
     RMSresidual_pre = zeros(2,1);
@@ -48,6 +49,9 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, measure
             Y = data(1,3:4)';
         end
         y(:,1) = Y - GofXt; % pre-fit residual
+%         K = P0*H'/(H*P0*H' + R); % kalman gain
+%         dx(:,1) = dx_ap + K*(y(:,1) - H*dx_ap);
+%         P(:,:,1) = (eye(n) - K*H)*P0*(eye(n) - K*H)' + K*R*K';
         alpha(:,1) = y(:,1) - H*dx(:,1); % post-fit residual 
         for i = 2:length(t)
             STM = STM_t0(:,:,i)/STM_t0(:,:,i-1);
@@ -94,6 +98,8 @@ function [X, dx, P, y, alpha] = newCKF(data, R, X0, dx0, P0, iterations, measure
         diffX0 = STM\dx(:,end);
 %         dx(:,1) = dx(:,1) - diffX0;
         dx(:,1) = 0;
+%         dx_ap = zeros(n,1);
+%         dx_ap = dx(:,1) - diffX0;
         X(:,1) = X(:,1) + diffX0;
     end
 

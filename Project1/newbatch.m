@@ -1,4 +1,4 @@
-function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R, X0, dx0, P0, measurement_type, constants)
+function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R, X0, dx0, P0, max_iterations, measurement_type, constants)
 %Batch filter
 %   data -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -31,7 +31,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual_post] = newbatch(data, R,
     P0est = P0;
 
     diffx0 = zeros(n,1);
-    max_iterations = 10;
+%     max_iterations = 3;
     for q = 1:max_iterations
         %% Initialize Iteration
         if min(data(:,1)) == t(1)
