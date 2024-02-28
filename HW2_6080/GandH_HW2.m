@@ -1,4 +1,4 @@
-function [GofXt, H] = GandH(t, X, stationNum, constants)
+function [GofXt, H] = GandH_HW2(t, X, stationNum, constants)
 %SIMMEAS Summary of this function goes here
 %   Detailed explanation goes here
 
