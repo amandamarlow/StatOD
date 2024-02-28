@@ -32,9 +32,7 @@ function [X, P, y, alpha] = EKF_SNC(t, data, R, Qc, X0, P0, warmStart, constants
         [Xvec, STMvec] = integrateTrajectorySTM_HW3([t(i-1), t(i)], X(:,i-1), eye(n), constants);
         X(:,i) = Xvec(:,end);
         STM = STMvec(:,:,end);
-%         [X(:,i), STM] = integrateTrajectorySTM(t(i-1), t(i), X(:,i-1), eye(n), constants);
         %% Time update
-%         dx_ap = STM*dx(:,i-1); % a priori state deviation estimate
         %% SNC
         dt = t(i) - t(i-1);
         % if t(i) - data(find(data(:,1) < t(i), 1, 'last'), 1) > 1000

@@ -34,7 +34,8 @@ function [X, dx, P, y, alpha] = CKF_DMC(t, data, R, Qc, X0, dx0, P0, tau, consta
     alpha(:,1) = y(:,1) - H*dx(:,1); % post-fit residual 
     for i = 2:length(t)
     %% Time update
-        if cond(STM_t0(:,:,i)) >=15
+        % if cond(STM_t0(:,:,i)) >=15
+        if log10(cond(STM_t0(:,:,i))) >=15
             [~, STMvec] = DMCintegrateTrajectorySTM_HW3([t(i-1), t(i)], X(:,i), eye(n), tau, constants);
             STM = STMvec(:,:,end);
         else
