@@ -53,6 +53,7 @@ plotErrorAndBounds_HW5(tspan, error_basic, P_basic, error_CKF, P_CKF, "CKF + Bas
 sigma_SNC = 1e-6;
 Qc = diag(sigma_SNC^2*ones(1,3));
 
+[X_procNoise, P_procNoise, Xref_procNoise, dx_procNoise, ytilde_procNoise, e_procNoise] = SRIF_procNoise(t, YJ3_simulated, X0, dx0, P0, meas_cov, Qc, constants);
 
 [X_SNC, dx_SNC, P_SNC, y_SNC, alpha_SNC] = CKF_SNC(t, YJ3_simulated, meas_cov, Qc, X0+dx0, zeros(n,1), P0, constants);
 error_SNC = (X_SNC + dx_SNC) - XtrueJ3;
