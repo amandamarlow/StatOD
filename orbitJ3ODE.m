@@ -1,4 +1,4 @@
-function [Sdot] = orbitODE(t,S,constants)
+function [Sdot] = orbitJ3ODE(t,S,constants)
 %ORBITODE Summary of this function goes here
 %   S is the 6x1 state vector [position; velocity]
 
@@ -23,7 +23,7 @@ Phi = reshape(S(10:end),[9,9]);
 % Dynamics
 a_mu_B = -mu*r_N/(r^3);
 a_J2_B = -3*mu*(ae^2)*J2/2/(r^7) * [x*(r^2 - 5*z^2); y*(r^2 - 5*z^2); z*(r^2 + 2*(x^2 + y^2) - 3*z^2)];
-a_J3_B = 1/2*mu/r^2*(ae/r)^3*J3 * [5*(7*(z/r)^3 - 3*(z/r))*x/r; 5*(7*(z/r)^3 - 3*(z/r))*y/r; 3*(1 - 10*(z/r)^2 + 35/5*(z/r)^4)];
+a_J3_B = 1/2*mu/r^2*(ae/r)^3*J3 * [5*(7*(z/r)^3 - 3*(z/r))*x/r; 5*(7*(z/r)^3 - 3*(z/r))*y/r; 3*(1 - 10*(z/r)^2 + 35/3*(z/r)^4)];
 a_N = a_mu_B + a_J2_B + a_J3_B;
 
 % Jacobians

@@ -30,7 +30,7 @@ function [X, dx0, P, y, alpha, iterations, RMSresidual] = batch(t, Ymat, R, X0, 
         if min(Ymat(:,1)) == t(1)
             Y = Ymat(1,3:4)';
             stationNum = Ymat(1,2);
-            [GofXt0, H(:,:,1)] = GandH(t(1), X(:,1), stationNum, constants); % STM at t0 is I
+            [GofXt0, H(:,:,1)] = GandH_HW2(t(1), X(:,1), stationNum, constants); % STM at t0 is I
             A = P0(:,:,1)^-1 + H(:,:,1).'*(R(:,:,1)^-1)*H(:,:,1); % Information Matrix
             y(:,1) = Y - GofXt0; % pre-fit residual
             N = H(:,:,1).'*(R(:,:,1)^-1)*y(:,1);       

@@ -66,8 +66,8 @@ r_s3_E = latlon2ECEF(ae, latlon_s3(1), latlon_s3(2));
 Y_ideal = [range_observations(:,1:2), range_observations(:,3), rangeRate_observations(:,3)]; % [t(s), station#, range measurement, range rate measurement]
 % with noise
 noise_sd = [1e-3; 1e-6]; % std deviation of the range and range rate noise
-% range_noise = mvnrnd(0,(noise_sd(1))^2, length(range_observations));
-% rangeRate_noise = mvnrnd(0,(noise_sd(2))^2, length(rangeRate_observations));
+range_noise = mvnrnd(0,(noise_sd(1))^2, length(range_observations));
+rangeRate_noise = mvnrnd(0,(noise_sd(2))^2, length(rangeRate_observations));
 % Y_simulated = [range_observations(:,1:2), range_observations(:,3) + range_noise, rangeRate_observations(:,3) + rangeRate_noise]; % [t(s), station#, range measurement, range rate measurement]
 load("Y_simulated.mat")
 idx1 = find(Y_simulated(:,2)==1);
@@ -75,9 +75,9 @@ idx2 = find(Y_simulated(:,2)==2);
 idx3 = find(Y_simulated(:,2)==3);
 
 % simulate measurements with J3
-% [J3range_observations, J3rangeRate_observations, J3elevations_byStation, J3elevations_all] = simMeas(tJ3, SJ3', [r_s1_E,r_s2_E,r_s3_E], constants);
-% YJ3_simulated = [J3range_observations(:,1:2), J3range_observations(:,3) + range_noise(1:length(J3range_observations)), J3rangeRate_observations(:,3) + rangeRate_noise(1:length(J3range_observations))]; % [t(s), station#, range measurement, range rate measurement]
-load("YJ3_simulated.mat")
+[J3range_observations, J3rangeRate_observations, J3elevations_byStation, J3elevations_all] = simMeas(tJ3, SJ3', [r_s1_E,r_s2_E,r_s3_E], constants);
+YJ3_simulated = [J3range_observations(:,1:2), J3range_observations(:,3) + range_noise(1:length(J3range_observations)), J3rangeRate_observations(:,3) + rangeRate_noise(1:length(J3range_observations))]; % [t(s), station#, range measurement, range rate measurement]
+% load("YJ3_simulated.mat")
 
 % Y_simulated = Y_simulated(1:ceil(end/2), :);
 % YJ3_simulated = YJ3_simulated(1:ceil(end/2), :);

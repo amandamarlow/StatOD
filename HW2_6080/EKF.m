@@ -43,7 +43,7 @@ function [X, P, y, alpha] = EKF(t, Ymat, R, X0, P0, warmStart, constants)
             for j = Y_at_t
                 Y = Ymat(j,3:4)';
                 stationNum = Ymat(j,2);
-                [GofXt, H] = GandH(t(i), X(:,i), stationNum, constants);
+                [GofXt, H] = GandH_HW2(t(i), X(:,i), stationNum, constants);
                 if isnan(GofXt(1))
                     P(:,:,i) = P_ap;
                     y(:,i) = NaN(2,1); % pre-fit residual

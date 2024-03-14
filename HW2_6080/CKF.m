@@ -36,7 +36,7 @@ function [X, dx, P, y, alpha] = CKF(t, Ymat, R, X0, dx0, P0, constants)
             for j = Y_at_t
                 Y = Ymat(j,3:4)';
                 stationNum = Ymat(j,2);
-                [GofXt, H] = GandH(t(i), X(:,i), stationNum, constants);
+                [GofXt, H] = GandH_HW2(t(i), X(:,i), stationNum, constants);
                 if isnan(GofXt(1))
 %                     dx(:,i) = dx_ap;
 %                     P(:,:,i) = P_ap;

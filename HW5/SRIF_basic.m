@@ -1,0 +1,107 @@
+function [X, P, Xref, dx, ytilde, e] = SRIF_basic(t, data, X0, dx0, P0, meas_cov, constants)
+%SRIF_BASIC Summary of this function goes here
+%   Detailed explanation goes here
+
+n = length(X0);
+tsteps = length(t);
+% Preallocate
+ytilde = NaN(2, tsteps);
+e = NaN(2, tsteps);
+dx = zeros(n,tsteps);
+P = zeros(n,n,tsteps);
+
+%% Initialize
+info = P0\eye(n);
+% R_ap = chol(info);
+% b_ap = R_ap*dx0;
+R_ap = chol(info);
+b_ap = R_ap*dx0;
+
+%% Integrate ref trajectory
+[Xref, STM_t0] = integrateTrajectorySTM_HW3(t, X0, eye(n), constants);
+
+% do first step
+Y = data(1,3:4)';
+stationNum = data(1,2);
+[GofXt, H] = GandH_HW3(t(1), Xref(:,1), stationNum, constants);
+y = Y - GofXt; % pre-fit residual
+%% Whitening
+V = chol(meas_cov);
+ytilde(:,1) = V\y;
+Htilde = V\H;
+
+%% Householder's
+for i = 1:2
+    % b_ap = b;
+    % b_ap = R*dx(:,k-1);
+    y_scalar = ytilde(i,1);
+    A = [R_ap, b_ap; Htilde(i,:), y_scalar];
+    [~, TA] = qr(A);
+    R = TA(1:n,1:n);
+    b = TA(1:6,end);
+    e(i,1) = TA(n+1:end, end);
+    R_ap = R;
+    b_ap = b;
+end
+for k = 2:tsteps
+    %% Time Update
+    STM = STM_t0(:,:,k)/STM_t0(:,:,k-1);
+    R_ap = R/STM;
+    [~, R_ap] = qr(R_ap);
+    % b_ap = R*dx(:,k-1);
+    % x_ap = R_ap*b_ap;
+    x_ap = STM*dx(:,k-1);
+    b_ap = R_ap*x_ap;
+    
+    %% Measurement Update
+    Y_at_t = find(t(k) == data(:,1));
+    if isempty(Y_at_t)
+        dx(:,k) = x_ap;
+        R = R_ap;
+        % dx(:,k) = R_ap*b_ap;
+    else
+        for j = Y_at_t
+            Y = data(j,3:4)';
+            stationNum = data(j,2);
+            [GofXt, H] = GandH_HW3(t(k), Xref(:,k), stationNum, constants);
+            y = Y - GofXt; % pre-fit residual
+            %% Whitening
+            V = chol(meas_cov);
+            ytilde(:,k) = V\y;
+            Htilde = V\H;
+            
+            %% Householder's
+            for i = 1:2
+                % b_ap = b;
+                % b_ap = R*dx(:,k-1);
+                y_scalar = ytilde(i,k);
+                A = [R_ap, b_ap; Htilde(i,:), y_scalar];
+                [~, TA] = qr(A);
+                R = TA(1:n,1:n);
+                b = TA(1:6,end);
+                e(i,k) = TA(n+1:end, end);
+                R_ap = R;
+                b_ap = b;
+            end
+
+            %% backward substitution
+            for i = n:-1:1
+                sum = 0;
+                if i < n
+                    for j = i+1:n
+                        sum = sum + R(i,j)*dx(j,k);
+                    end
+                end
+                dx(i,k) = (b(i)-sum)/R(i,i);
+            end
+
+        end  
+    end
+    % P(:,:,k) = (R'*R)\eye(n);
+    P(:,:,k) = R\inv(R');
+end
+
+X = Xref + dx;
+
+end
+
