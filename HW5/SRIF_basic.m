@@ -1,11 +1,11 @@
-function [X, P, Xref, dx, ytilde, e] = SRIF_basic(t, data, X0, dx0, P0, meas_cov, constants)
+function [X, P, Xref, dx, y, e] = SRIF_basic(t, data, X0, dx0, P0, meas_cov, constants)
 %SRIF_BASIC Summary of this function goes here
 %   Detailed explanation goes here
 
 n = length(X0);
 tsteps = length(t);
 % Preallocate
-ytilde = NaN(2, tsteps);
+y = NaN(2, tsteps);
 e = NaN(2, tsteps);
 dx = zeros(n,tsteps);
 P = zeros(n,n,tsteps);
@@ -18,7 +18,7 @@ b_ap = R_ap*dx0;
 %% Integrate ref trajectory
 [Xref, STM_t0] = integrateTrajectorySTM_HW3(t, X0, eye(n), constants);
 
-[dx(:,1), R] = measUpdateSRIF(t(1), data(1,:), X0, R_ap, b_ap, meas_cov, constants);
+[dx(:,1), R, y(:,1)] = measUpdateSRIF(t(1), data(1,:), X0, R_ap, b_ap, meas_cov, constants);
 P(:,:,1) = R\inv(R');
 for k = 2:tsteps
     %% Time Update
@@ -36,7 +36,7 @@ for k = 2:tsteps
         R = R_ap;
     else
         for j = Y_at_t
-            [dx(:,k), R] = measUpdateSRIF(t(k), data(j,:), Xref(:,k), R_ap, b_ap, meas_cov, constants);
+            [dx(:,k), R, y(:,k)] = measUpdateSRIF(t(k), data(j,:), Xref(:,k), R_ap, b_ap, meas_cov, constants);
             R_ap = R;
             b_ap = R*dx(:,k);
 

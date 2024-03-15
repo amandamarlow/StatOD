@@ -18,7 +18,7 @@ sig_6_batch = squeeze(P_batch(6,6,:)).^(1/2);
 
 t = t./60^2;
 
-% colororder("earth");
+% colororder("reef");
 
 figure
 subplot(3, 2, 1);
@@ -35,9 +35,8 @@ Pminus2 = plot(t, -3*sig_1_batch, '--');
 Pminus2.SeriesIndex = Pplus2.SeriesIndex;
 xlabel('time [hours]');
 ylabel("$\delta x$", 'Interpreter', 'latex');
-colororder("earth");
+colororder("reef");
 % ylim([-1 1]*maxError(1))
-legend("Smoothed CKF", "Batch", "CKF 3$\sigma$", '', "batch 3$\sigma$", '','Location', 'northwest', "Interpreter", "latex")
 % subplot
 subplot(3, 2, 3);
 % plot(t, StateErrors(2, :));
@@ -52,7 +51,7 @@ Pminus2 = plot(t, -3*sig_2_batch, '--');
 Pminus2.SeriesIndex = Pplus2.SeriesIndex;
 xlabel('time [hours]');
 ylabel("$\delta y$", 'Interpreter', 'latex');
-colororder("earth");
+colororder("reef");
 % ylim([-1 1]*maxError(2))
 % subplot
 subplot(3, 2, 5);
@@ -68,7 +67,7 @@ Pminus2 = plot(t, -3*sig_3_batch, '--');
 Pminus2.SeriesIndex = Pplus2.SeriesIndex;
 xlabel('time [hours]');
 ylabel("$\delta z$", 'Interpreter', 'latex');
-colororder("earth");
+colororder("reef");
 % ylim([-1 1]*maxError(3))
 % subplot
 subplot(3, 2, 2);
@@ -84,7 +83,8 @@ Pminus2 = plot(t, -3*sig_4_batch, '--');
 Pminus2.SeriesIndex = Pplus2.SeriesIndex;
 xlabel('time [hours]');
 ylabel("$\delta \dot{x}$", 'Interpreter', 'latex');
-colororder("earth");
+colororder("reef");
+legend("SRIF", "CKF", "SRIF 3$\sigma$", '', "CKF 3$\sigma$", '','Location', 'northeast', "Interpreter", "latex")
 % ylim([-1 1]*maxError(4))
 % subplot
 subplot(3, 2, 4);
@@ -100,7 +100,7 @@ Pminus2 = plot(t, -3*sig_5_batch, '--');
 Pminus2.SeriesIndex = Pplus2.SeriesIndex;
 xlabel('time [hours]');
 ylabel("$\delta \dot{y}$", 'Interpreter', 'latex');
-colororder("earth");
+colororder("reef");
 % ylim([-1 1]*maxError(5))
 % subplot
 subplot(3, 2, 6);
@@ -116,7 +116,7 @@ Pminus2 = plot(t, -3*sig_6_batch, '--');
 Pminus2.SeriesIndex = Pplus2.SeriesIndex;
 xlabel('time [hours]');
 ylabel("$\delta \dot{z}$", 'Interpreter', 'latex');
-colororder("earth");
+colororder("reef");
 % ylim([-1 1]*maxError(6))
 end
 

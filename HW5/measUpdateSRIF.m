@@ -1,4 +1,4 @@
-function [dx, R] = measUpdateSRIF(t, data_k, Xref, R_ap, b_ap, meas_cov, constants)
+function [dx, R, ytilde] = measUpdateSRIF(t, data_k, Xref, R_ap, b_ap, meas_cov, constants)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
