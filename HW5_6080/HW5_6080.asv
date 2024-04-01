@@ -49,6 +49,19 @@ error_CKF = (X_CKF + dx_CKF) - Xtrue;
 plotErrorAndBounds(tspan, error_basic, P_basic, "Basic SRIF Error vs Time")
 plotErrorAndBounds_HW5(tspan, error_basic, P_basic, error_CKF, P_CKF, "CKF + Basic SRIF Error vs Time")
 
+X_tf_lkf = X_CKF(:,end)';
+X_tf_basic = X_basic(:,end)';
+diffX_basic = X_tf_basic - X_tf_lkf;
+P_tf_lkf = diag(P_CKF(:,:,end))'.^(1/2);
+P_tf_basic = diag(P_basic(:,:,end))'.^(1/2);
+diffP_basic = P_tf_basic - P_tf_lkf;
+
+X_tf_lkf = round(X_tf_lkf, 7, 'significant');
+X_tf_basic = round(X_tf_basic, 7, 'significant');
+diffX_basic = round(diffX_basic, 7, 'significant');
+P_tf_lkf = round(P_tf_lkf, 6, 'significant');
+P_tf_basic = round(P_tf_basic, 6, 'significant');
+diffP_basic = round(diffP_basic, 6, 'significant');
 %% Question 2
 sigma_SNC = 1e-6;
 Qc = diag(sigma_SNC^2*ones(1,3));
@@ -65,3 +78,17 @@ error_SNC = (X_SNC + dx_SNC) - XtrueJ3;
 plotErrorAndBounds(tspan, error_SNC, P_SNC, "LKF SNC Error vs Time")
 
 plotErrorAndBounds_HW5(tspan, error_procNoise, P_procNoise, error_SNC, P_SNC, "SNC + Process Noise SRIF Error vs Time")
+
+X_tf_SNC = X_SNC(:,end)'+dx_SNC(:,end)';
+X_tf_procNoise = X_procNoise(:,end)';
+diffX_procNoise = X_tf_procNoise - X_tf_SNC;
+P_tf_SNC = diag(P_SNC(:,:,end))'.^(1/2);
+P_tf_procNoise = diag(P_procNoise(:,:,end))'.^(1/2);
+diffP_procNoise = P_tf_procNoise - P_tf_SNC;
+
+X_tf_SNC = round(X_tf_SNC, 6, 'significant');
+X_tf_procNoise = round(X_tf_procNoise, 6, 'significant');
+diffX_procNoise = round(diffX_procNoise, 6, 'significant');
+P_tf_SNC = round(P_tf_SNC, 6, 'significant');
+P_tf_procNoise = round(P_tf_procNoise, 6, 'significant');
+diffP_procNoise = round(diffP_procNoise, 6, 'significant');
