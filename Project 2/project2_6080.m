@@ -54,7 +54,7 @@ r_traj = S(:,1:3)';
 figure
 plot3(r_traj(1,:), r_traj(2,:), r_traj(3,:))
 hold on
-plotBody([0;0;0], constants.ae*1000)
+% plotBody([0;0;0], constants.ae*1000)
 plot3(truthTraj(:,2), truthTraj(:,3), truthTraj(:,4), '--')
 axis equal
 grid on
