@@ -11,22 +11,42 @@ load("constants.mat")
 load("XtrueJ3.mat")
 
 n = 6;
+q = 1;
 Pxx0 = eye(n)*1e4;
 c = 0;
 J3 = -0.0000025323;
 deltac = J3;
-Pcc0 = J3^2;
+Pcc = J3^2;
 
 %% implement consider covariance filter
 dx0 = zeros(n,1);
 
-[X, Xref, dx, P, Pxx, y, alpha] = seqConsiderCov(tspan, YJ3_simulated, meas_cov, X0, dx0, P0, Pxx0, deltac, Pcc0, constants); % error in Pxx
+[X, Xref, dx, P, Pxx, Pxc, y, alpha] = seqConsiderCov(tspan, YJ3_simulated, meas_cov, X0, dx0, P0, Pxx0, deltac, Pcc, constants); % error in Pxx
 error = X - XtrueJ3;
 plotErrorAndBounds_HW6(tspan, error, P, Pxx, "state error and $2 \sigma$ bounds")
+RMSposition3d = rms(vecnorm(error(1:3,:),2,1), "omitnan");
+RMSvelocity3d = rms(vecnorm(error(4:6,:),2,1), "omitnan");
+RMSposition = rms(error(1:3,:), 2, "omitnan");
+RMSvelocity = rms(error(4:6,:), 2, "omitnan");
 
-Pc_
-[~, PSI] = integrateTrajectoryPSI_consider(t, X0(:,1), eye(n), zeros(n,q), constants);
-PSI_tf = PSI(1:n,1:n,end);
+outsideP = sum(all(error > ))
+
+Pc_tf = [Pxx(:,:,end), Pxc(:,:,end); Pxc(:,:,end)', Pcc];
+[~, PSI] = integrateTrajectoryPSI_consider(tspan, X0, eye(n), zeros(n,q), constants);
+PSI_tf = PSI(:,:,end);
 STM_tf = PSI(1:n,1:n,end);
-dx0map = STM_tf\dx(end);
-Pc0map = PSI_tf\Pc_tf/PSI_tf;
+dx0map = STM_tf\dx(:,end);
+Pc0map = PSI_tf\Pc_tf/PSI_tf';
+% Integrate forward in time
+[Xint, PSIint] = integrateTrajectoryPSI_consider(tspan, X0(:,1), eye(n), zeros(n,q), constants);
+Pcint = zeros(n+q,n+q,length(tspan));
+for k = 1:length(tspan)
+    Pcint(:,:,k) = PSIint(:,:,k)*Pc0map*PSIint(:,:,k)';
+end
+errorint = Xint - XtrueJ3;
+plotErrorAndBounds_2sig(tspan, errorint, Pcint(1:n,1:n,:), "State error and $2 \sigma$ bounds with all measurements")
+
+RMSposition3d_int = rms(vecnorm(errorint(1:3,:),2,1), "omitnan");
+RMSvelocity3d_int = rms(vecnorm(errorint(4:6,:),2,1), "omitnan");
+RMSposition_int = rms(errorint(1:3,:), 2, "omitnan");
+RMSvelocity_int = rms(errorint(4:6,:), 2, "omitnan");

@@ -1,11 +1,11 @@
-function [Xvec, PSI] = integrateTrajectoryPSI_consider(tspan, X_t1, STM_t1, theta_t1, constants)
+function [Xvec, PSI] = integrateTrajectoryPSI_consider(tspan, X_t0, STM_t0, theta_t0, constants)
 %INTEGRATETRAJECTORYSTM Summary of this function goes here
 %   Detailed explanation goes here
 
-n = length(X_t1);
+n = length(X_t0);
 q = 1;
 % tspan = [t1 t2];
-S0 = [X_t1; reshape(STM_t1,[],1); reshape(theta_t1,[],1)];
+S0 = [X_t0; reshape(STM_t0,[],1); reshape(theta_t0,[],1)];
 
 % simulate of reference trajectory
 options = odeset('RelTol',1e-12,'AbsTol',1e-12);
