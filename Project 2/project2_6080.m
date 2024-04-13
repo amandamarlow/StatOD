@@ -1,5 +1,5 @@
 clear
-clc
+% clc
 close all
 
 addpath('C:\Users\marlo\OneDrive - UCB-O365\Documents\6080 - Statistical Orbit Determination\Project 2\Provided Files')
@@ -8,6 +8,7 @@ addpath('C:\Users\marlo\MATLAB Drive\6080\StatOD')
 
 % readtable("Project2a_Obs_modified.txt")
 data_2a = readmatrix("Project2a_Obs.txt");
+data_2a(:,end) = [];
 % readtable('Project2 Prob2 truth traj 50days.txt')
 truthTraj = readmatrix("Project2_Prob2_truth_traj_50days.txt");
 truthTraj(:,end) = [];
@@ -24,12 +25,24 @@ constants.a2m = 0.01e-6; % km^2/kg
 
 
 % measurement setup
-theta0 = 0;
-omegaE_N = [0; 0; 7.29211585275553e-5]; % rad/s
+constants.theta0 = 0;
+constants.omegaE = 7.29211585275553e-5; % rad/s
 constants.ae = 6378.1363; % km
-DSS_34 = [35.398333*pi/180; 148.981944*pi/180; 0.691750]; % [lat rad; lon rad; altitude km]
-DSS_65 = [40.427222*pi/180; 355.749444*pi/180; 0.834539]; % [lat rad; lon rad; altitude km] NEGATIVE ONLY IN PART 2
-DSS_13 = [35.247164*pi/180; 243.205*pi/180; 1.07114904]; % [lat rad; lon rad; altitude km]
+% DSS.lat_34 = 35.398333*pi/180; % [lat rad; lon rad; altitude km]
+% DSS.lon_34 = 148.981944*pi/180; % [lat rad; lon rad; altitude km]
+% DSS.alt_34 = 0.691750; % [lat rad; lon rad; altitude km]
+% DSS.lat_65 = 40.427222*pi/180; % [lat rad; lon rad; altitude km] NEGATIVE ONLY IN PART 2
+% DSS.lon_65 = 355.749444*pi/180; 0.834539; % [lat rad; lon rad; altitude km] NEGATIVE ONLY IN PART 2
+% DSS.alt_65 = 0.834539; % [lat rad; lon rad; altitude km] NEGATIVE ONLY IN PART 2
+% DSS.lat_13 = 35.247164*pi/180; % lat rad
+% DSS.lon_13 = 243.205*pi/180; % lon rad
+% DSS.alt_13 = 1.07114904; % altitude km
+% constants.DSS = DSS;
+DSS_34 = [35.398333*pi/180, 148.981944*pi/180, 0.691750]; % [lat rad; lon rad; altitude km]
+DSS_65 = [40.427222*pi/180, 355.749444*pi/180, 0.834539]; % [lat rad; lon rad; altitude km] NEGATIVE ONLY IN PART 2
+DSS_13 = [35.247164*pi/180, 243.205*pi/180, 1.07114904]; % [lat rad; lon rad; altitude km]
+constants.DSS_latlon = [DSS_34(1:2); DSS_65(1:2); DSS_13(1:2)];
+constants.DSS_alt = [DSS_34(3); DSS_65(3); DSS_13(3)];
 
 rngNoise = 5e-3; % km
 rngeRtNoise = 0.5e-6; % km
@@ -44,12 +57,13 @@ sigX = 100; % km
 sigV = 0.1; % km/s
 sigCr = 0.1;
 P0 = diag([sigX^2*ones(1,3), sigV^2*ones(1,3), sigCr^2]);
-S0 = [X0; reshape(eye(n),[],1)];
+S0_traj = [X0; reshape(eye(n),[],1)];
 
-tspan = truthTraj(:,1);
+% compare to provided truth trajectory
+tspan_traj = truthTraj(:,1);
 options = odeset('RelTol',1e-12,'AbsTol',1e-12);
-[t,S] = ode45(@(t,S) project2ODE(t,S,constants), tspan, S0, options);
-r_traj = S(:,1:3)';
+[t_traj,S_traj] = ode45(@(t,S) project2ODE(t,S,constants), tspan_traj, S0_traj, options);
+r_traj = S_traj(:,1:3)';
 
 figure
 plot3(r_traj(1,:), r_traj(2,:), r_traj(3,:))
@@ -60,4 +74,56 @@ axis equal
 grid on
 hold off
 
-trajError = truthTraj-[t, S];
+trajError = truthTraj-[t_traj, S_traj];
+final_error = trajError(end, :);
+fprintf("final state errors:")
+disp(final_error(1:8))
+fprintf("final STM errors: \n")
+disp(reshape(final_error(9:end), n,n))
+
+% simulate whole trajectory
+as = 696000; % km
+tspan_2a = data_2a(:,1);
+X0_2a = [-274096790.0; -92859240.0; -40199490.0; 32.67; -8.94; -3.88; 1.0]; % X km, Y km, Z km, VX km/sec, VY km/sec, VZ km/sec, CR
+S0_2a = [X0_2a; reshape(eye(n),[],1)];
+[t_2a,S_2a] = ode45(@(t,S) project2ODE(t,S,constants), tspan_2a, S0_2a, options);
+r_2a = S_2a(:,1:3)';
+
+colorS = "#EDB120";
+colorE = "#77AC30";
+
+r_S2E_N = zeros(3,length(tspan_2a));
+for i = 1:length(tspan_2a)
+    [r_S2E_N(:,i), ~, ~] = Ephem(constants.t0+tspan_2a(i)/86400,3, 'EME2000');
+end
+r_E2S_N = -r_S2E_N;
+
+figure
+plot3(r_2a(1,:), r_2a(2,:), r_2a(3,:))
+hold on
+plotBody([0;0;0], constants.ae*200, colorE)
+plot3(r_E2S_N(1,:), r_E2S_N(2,:), r_E2S_N(3,:), 'Color', colorS)
+plotBody(-r_S2E_N(:,end), as*10, colorS)
+legend("Spacecraft Trajectory", "Earth (200 scale)", "Sun Trajectory", "Sun at tf (10 scale)")
+axis equal
+grid on
+hold off
+
+
+figure
+hold on
+plotBody([0;0;0], as*10, colorS)
+plot3(r_S2E_N(1,:), r_S2E_N(2,:), r_S2E_N(3,:), 'Color', colorE)
+plotBody(r_S2E_N(:,end), constants.ae*500, colorE)
+plot3(r_2a(1,:)+r_S2E_N(1,:), r_2a(2,:)+r_S2E_N(2,:), r_2a(3,:)+r_S2E_N(3,:))
+scatter3(r_2a(1,end)+r_S2E_N(1,end), r_2a(2,end)+r_S2E_N(2,end), r_2a(3,end)+r_S2E_N(3,end), '*')
+% legend("Spacecraft Trajectory", "Earth (200 scale)", "Sun Trajectory", "Sun at tf (10 scale)")
+axis equal
+grid on
+hold off
+
+
+%% part 2 estimate with observations
+
+iterations = 1;
+[X2_a, Xref_2a, dx_2a, P_2a, y_2a, alpha_2a] = iteratedCKF(data_2a, meas_cov, X0_2a, zeros(n,1), P0, iterations, "both", constants);

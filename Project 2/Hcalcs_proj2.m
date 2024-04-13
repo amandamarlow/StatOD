@@ -1,4 +1,4 @@
-function [range, rangeRate, H_range, H_rangeRate] = Hcalcs_HW3(X_sc, X_station, ECEF2ECI, omegaE_N)
+function [range, rangeRate, H_range, H_rangeRate] = Hcalcs_proj2(X_sc, X_station, ECEF2ECI, omegaE_N)
 %Hcalcs H matrix of range / range rate measurement partials with 
 %respect to spacecraft state and station location
 %   
