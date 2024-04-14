@@ -8,6 +8,7 @@ function [GofXt, H] = GandH_proj2(t, X, stnsInView, const)
     omegaE_N = [0;0;omegaE];
     theta0 = const.theta0;
     ae = const.ae;
+    X_sc = X(1:6);
 
     % % calculate station position
     % stations_latlon = [
@@ -24,11 +25,11 @@ function [GofXt, H] = GandH_proj2(t, X, stnsInView, const)
     for stnNum = 1:length(stnsInView)
         if stnsInView(stnNum) == true
             r_stn_E = latlon2ECEF(const.DSS_alt(stnNum), const.DSS_latlon(stnNum,1), const.DSS_latlon(stnNum,2));
-            [range, rangeRate, H_range, H_rangeRate] = Hcalcs_proj2(X(1:6), r_stn_E, NE, omegaE_N);
+            [range, rangeRate, H_range, H_rangeRate] = Hcalcs_proj2(X_sc, r_stn_E, NE, omegaE_N);
             GofXt(stnNum) = range;
             GofXt(3+stnNum) = rangeRate;
-            H(stnNum,:) = H_range(1:6);
-            H(3+stnNum,:) = H_rangeRate(1:6);
+            H(stnNum,:) = [H_range(1:6), zeros(1,n-6)];
+            H(3+stnNum,:) = [H_rangeRate(1:6), zeros(1,n-6)];
         end
     end
     
