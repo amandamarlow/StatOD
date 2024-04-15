@@ -37,11 +37,6 @@ aE_N = -muE*rE_N/(rE^3);
 a_N = aE_N + aS_N + aSRP_N;
 
 % Jacobians
-% amu_partial_R = [
-%     -((sqrt(rE^2) * (rE^2 - 3*x^2) * muE) / rE^6), (3*x*y*muE) / (rE^2)^(5/2), (3*x*z*muE) / (rE^2)^(5/2);
-%     (3*x*y*muE) / (rE^2)^(5/2), -((sqrt(rE^2) * (rE^2 - 3*y^2) * muE) / rE^6), (3*y*z*muE) / (rE^2)^(5/2);
-%     (3*x*z*muE) / (rE^2)^(5/2), (3*y*z*muE) / (rE^2)^(5/2), -((sqrt(rE^2) * (rE^2 - 3*z^2) * muE) / rE^6)
-% ];
 amu_partial_R = -muE/(rE^3)*eye(3) + 3*muE/(rE^5)*(rE_N*rE_N');
 aS_partial_R = muS * (3/(r_S2sc^5)*(r_sc2S_N*r_sc2S_N')*eye(3) - 1/r_S2sc^3*eye(3));
 aSRP_partial_R = Cr*const.p_srAU*(const.AU^2)*const.a2m * (1/(r_S2sc^3)*eye(3) - 3/(r_S2sc^5)*(r_S2sc_N*r_S2sc_N')*eye(3));

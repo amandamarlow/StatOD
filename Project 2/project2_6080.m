@@ -1,5 +1,5 @@
 clear
-% clc
+clc
 close all
 
 addpath('C:\Users\marlo\OneDrive - UCB-O365\Documents\6080 - Statistical Orbit Determination\Project 2\Provided Files')
@@ -64,11 +64,11 @@ grid on
 hold off
 
 trajError = truthTraj-[t_traj, S_traj];
-final_error = trajError(end, :);
-fprintf("final state errors:")
-disp(final_error(1:8))
-fprintf("final STM errors: \n")
-disp(reshape(final_error(9:end), n,n))
+% final_error = trajError(end, :);
+% fprintf("final state errors:")
+% disp(final_error(1:8))
+% fprintf("final STM errors: \n")
+% disp(reshape(final_error(9:end), n,n))
 
 figure
 subplot(2,1,1)
@@ -125,10 +125,24 @@ hold off
 constants.DSS_latlon(2,2) = -355.749444*pi/180;
 
 iterations = 1;
-[X_2a, Xref_2a, dx_2a, P_2a, y_2a, alpha_2a] = CKF_SNC(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, constants);
+[X_2a, Xref_2a, dx_2a, P_2a, y_2a, alpha_2a] = CKF_project2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 1, false, constants);
 plotResiduals(tspan_2a, y_2a, alpha_2a, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
 error2a = X_2a-X_2a_true;
 plotErrorAndBounds_proj2(tspan_2a, error2a, P_2a, "2a State Error and 3$\sigma$ Bounds vs. Time")
 
+% [X_2a_smooth, Xref_2a_smooth, dx_2a_smooth, P_2a_smooth, y_2a_smooth, alpha_2a_smooth] = CKF_project2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 1, true, constants);
+% plotResiduals(tspan_2a, y_2a_smooth, alpha_2a_smooth, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
+% error2a = X_2a_smooth-X_2a_true;
+% plotErrorAndBounds_proj2(tspan_2a, error2a_smooth, P_2a_smooth, "2a State Error and 3$\sigma$ Bounds vs. Time")
+
+[X_2a_iterated, Xref_2a_iterated, dx_2a_iterated, P_2a_iterated, y_2a_iterated, alpha_2a_iterated] = CKF_project2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 15, false, constants);
+plotResiduals(tspan_2a, y_2a_iterated, alpha_2a_iterated, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
+error2a_iterated = X_2a_iterated-X_2a_true;
+plotErrorAndBounds_proj2(tspan_2a, error2a_iterated, P_2a_iterated, "2a State Error and 3$\sigma$ Bounds vs. Time")
+notPosDef = zeros(1,length(P_2a_iterated));
+for i = 1:length(P_2a_iterated)
+    notPosDef(i) = all(diag(P_2a_iterated(:,:,i))<=0);
+end
+sumNotPosDef = sum(notPosDef);
 %% part 3
 constants.DSS_latlon(2,2) = 355.749444*pi/180;
