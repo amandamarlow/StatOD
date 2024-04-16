@@ -67,10 +67,6 @@ function [x, P, preFit] = UKF(t, data, R, Qc, x0, P0, alpha, beta, constants)
         for i = 1:2*n+1
             X_ap(:,i) = F_UKF(t(k-1), t(k), X(:,i,k-1), constants);
         end
-        % X(:,:,k) = zeros(n,n*2+1);
-        % for i = 1:2*n+1
-        %     X(:,i,k) = F_UKF(t(k-1), t(k), X(:,i,k-1), constants);
-        % end
 
         % SNC
         dt = t(k) - t(k-1);
@@ -85,22 +81,11 @@ function [x, P, preFit] = UKF(t, data, R, Qc, x0, P0, alpha, beta, constants)
         Psum = zeros(n,n);
         for i = 1:2*n+1
             x_ap = x_ap + Wm(i)*X_ap(:,i);
-            % Psum = Psum + Wc(i)*(X_ap(:,i)-x_ap)*(X_ap(:,i)-x_ap)'; 
         end
         for i = 1:2*n+1
-            % x_ap = x_ap + Wm(i)*X_ap(:,i);
             Psum = Psum + Wc(i)*(X_ap(:,i)-x_ap)*(X_ap(:,i)-x_ap)'; 
         end
-        % x_ap = zeros(n,1);
-        % Psum = zeros(n,n);
-        % for i = 1:2*n+1
-        %     x_ap = x_ap + Wm(i)*X(:,i);
-        %     % Psum = Psum + Wc(i)*(X_ap(:,i)-x_ap)*(X_ap(:,i)-x_ap)'; 
-        % end
-        % for i = 1:2*n+1
-        %     % x_ap = x_ap + Wm(i)*X_ap(:,i);
-        %     Psum = Psum + Wc(i)*(X(:,i,k)-x_ap)*(X(:,i,k)-x_ap)'; 
-        % end
+
         P_ap = Qd + Psum;
         
         S = chol(P_ap);
@@ -116,17 +101,10 @@ function [x, P, preFit] = UKF(t, data, R, Qc, x0, P0, alpha, beta, constants)
             x(:,k) = x_ap;
             P(:,:,k) = P_ap;
         else
-            % Resample
-            % S = chol(P_ap);
-            % X(:,1,k) = x_ap;
-            % for j = 1:n
-            %     X(:,j+1, k) = x_ap + sqrt(n + lambda)*S(:,j);
-            %     X(:,n+j+1, k) = x_ap - sqrt(n + lambda)*S(:,j);
-            % end
             % Process all measurements
             for measIdx = Y_at_t
-                y = data(j,3:4)';
-                stationNum = data(j,2);
+                y = data(measIdx,3:4)';
+                stationNum = data(measIdx,2);
                 Y = zeros(2,2*n+1);
                 y_ap = zeros(2,1);
                 for i = 1:2*n+1
