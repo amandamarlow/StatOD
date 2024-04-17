@@ -40,7 +40,7 @@ function [x, P, preFit] = UKF(t, data, R, Qc, x0, P0, alpha, beta, constants)
         end
         
         for i = 1:(2*n+1)
-            X(:,i,k) = F_UKF(t(k-1), t(k), X(:,i,k-1), constants);
+            X(:,i,k) = F_UKF_J3(t(k-1), t(k), X(:,i,k-1), constants);
         end
 
         x_ap = zeros(n,1);
