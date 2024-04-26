@@ -6,6 +6,8 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
 %   dx0 = initial a priori estimated state deviation
 %   P0 = error covatiance associated with dx0
 
+    
+
     % Preallocate
 %     t = Ymat(:,1); % time after epoch [s] corresponds to measurement vector
     n = length(Xref0);

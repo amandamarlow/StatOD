@@ -72,29 +72,29 @@ warmStart = 1;
 exponent = -10:-2; % km/s^2
 % exponent = -7:-5; % km/s^2
 
-sigsRMSposition_CKF_SNC = zeros(1,length(exponent));
-sigsRMSvelocity_CKF_SNC = zeros(1,length(exponent));
-sigsRMSresiduals_CKF_SNC = zeros(2,length(exponent));
-sigsRMSposition_EKF_SNC = zeros(1,length(exponent));
-sigsRMSvelocity_EKF_SNC = zeros(1,length(exponent));
-sigsRMSresiduals_EKF_SNC = zeros(2,length(exponent));
-sigmas_SNC = zeros(1,length(exponent));
-for i = 1:length(exponent)
-    sigmas_SNC(i) = 10^exponent(i);
-    Qc = diag(sigmas_SNC(i)^2*ones(1,3));
-
-    [tempX_CKF_SNC, tempdx_CKF_SNC, ~, tempy_CKF_SNC, tempalpha_CKF_SNC] = CKF_SNC(t, YJ3_simulated, R, Qc, X0, zeros(6,1), P0, constants);
-    temperror_CKF_SNC = (tempX_CKF_SNC + tempdx_CKF_SNC) - Xtrue;
-    sigsRMSposition_CKF_SNC(:,i) = rms(vecnorm(temperror_CKF_SNC(1:3,:),2,1), "omitnan");
-    sigsRMSvelocity_CKF_SNC(:,i) = rms(vecnorm(temperror_CKF_SNC(4:6,:),2,1), "omitnan");
-    sigsRMSresiduals_CKF_SNC(:,i) = rms(tempalpha_CKF_SNC, 2, "omitnan");
-
-    % [tempX_EKF_SNC, ~, tempy_EKF_SNC, tempalpha_EKF_SNC] = EKF_SNC(t, YJ3_simulated, R, Qc, X0, P0, warmStart, constants);
-    % temperror_EKF_SNC = tempX_EKF_SNC - Xtrue;
-    % sigsRMSposition_EKF_SNC(:,i) = rms(vecnorm(temperror_EKF_SNC(1:3,:),2,1), "omitnan");
-    % sigsRMSvelocity_EKF_SNC(:,i) = rms(vecnorm(temperror_EKF_SNC(4:6,:),2,1), "omitnan");
-    % sigsRMSresiduals_EKF_SNC(:,i) = rms(tempalpha_EKF_SNC, 2, "omitnan");
-end
+% sigsRMSposition_CKF_SNC = zeros(1,length(exponent));
+% sigsRMSvelocity_CKF_SNC = zeros(1,length(exponent));
+% sigsRMSresiduals_CKF_SNC = zeros(2,length(exponent));
+% sigsRMSposition_EKF_SNC = zeros(1,length(exponent));
+% sigsRMSvelocity_EKF_SNC = zeros(1,length(exponent));
+% sigsRMSresiduals_EKF_SNC = zeros(2,length(exponent));
+% sigmas_SNC = zeros(1,length(exponent));
+% for i = 1:length(exponent)
+%     sigmas_SNC(i) = 10^exponent(i);
+%     Qc = diag(sigmas_SNC(i)^2*ones(1,3));
+% 
+%     [tempX_CKF_SNC, tempdx_CKF_SNC, ~, tempy_CKF_SNC, tempalpha_CKF_SNC] = CKF_SNC(t, YJ3_simulated, R, Qc, X0, zeros(6,1), P0, constants);
+%     temperror_CKF_SNC = (tempX_CKF_SNC + tempdx_CKF_SNC) - Xtrue;
+%     sigsRMSposition_CKF_SNC(:,i) = rms(vecnorm(temperror_CKF_SNC(1:3,:),2,1), "omitnan");
+%     sigsRMSvelocity_CKF_SNC(:,i) = rms(vecnorm(temperror_CKF_SNC(4:6,:),2,1), "omitnan");
+%     sigsRMSresiduals_CKF_SNC(:,i) = rms(tempalpha_CKF_SNC, 2, "omitnan");
+% 
+%     % [tempX_EKF_SNC, ~, tempy_EKF_SNC, tempalpha_EKF_SNC] = EKF_SNC(t, YJ3_simulated, R, Qc, X0, P0, warmStart, constants);
+%     % temperror_EKF_SNC = tempX_EKF_SNC - Xtrue;
+%     % sigsRMSposition_EKF_SNC(:,i) = rms(vecnorm(temperror_EKF_SNC(1:3,:),2,1), "omitnan");
+%     % sigsRMSvelocity_EKF_SNC(:,i) = rms(vecnorm(temperror_EKF_SNC(4:6,:),2,1), "omitnan");
+%     % sigsRMSresiduals_EKF_SNC(:,i) = rms(tempalpha_EKF_SNC, 2, "omitnan");
+% end
 
 % a_DMC = zeros(3,1);
 % X0 = S0(1:n);
@@ -134,7 +134,7 @@ end
 
 %% Plot Sigma Range
 
-plotRMSsigmas(sigmas_SNC, sigsRMSposition_CKF_SNC, sigsRMSvelocity_CKF_SNC, sigsRMSresiduals_CKF_SNC, "CKF-SNC RMS Values")
+% plotRMSsigmas(sigmas_SNC, sigsRMSposition_CKF_SNC, sigsRMSvelocity_CKF_SNC, sigsRMSresiduals_CKF_SNC, "CKF-SNC RMS Values")
 % plotRMSsigmas(sigmas_SNC, sigsRMSposition_EKF_SNC, sigsRMSvelocity_EKF_SNC, sigsRMSresiduals_EKF_SNC, "EKF-SNC RMS Values")
 % plotRMSsigmas(sigmas_DMC, sigsRMSposition_CKF_DMC, sigsRMSvelocity_CKF_DMC, sigsRMSresiduals_CKF_DMC, "CKF-DMC RMS Values")
 % plotRMSsigmas(sigmas_DMC, sigsRMSposition_EKF_DMC, sigsRMSvelocity_EKF_DMC, sigsRMSresiduals_EKF_DMC, "EKF-DMC RMS Values")
@@ -154,24 +154,24 @@ warmStart = 1;
 sigma_SNC = 1e-6;
 Qc = diag(sigma_SNC^2*ones(1,3));
 
-[X_CKF_SNC, dx_CKF_SNC, P_CKF_SNC, y_CKF_SNC, alpha_CKF_SNC] = CKF_SNC(t, YJ3_simulated, R, Qc, X0, zeros(n,1), P0, constants);
-error_CKF_SNC = (X_CKF_SNC + dx_CKF_SNC) - Xtrue;
+% [X_CKF_SNC, dx_CKF_SNC, P_CKF_SNC, y_CKF_SNC, alpha_CKF_SNC] = CKF_SNC(t, YJ3_simulated, R, Qc, X0, zeros(n,1), P0, constants);
+% error_CKF_SNC = (X_CKF_SNC + dx_CKF_SNC) - Xtrue;
 
 % % [X_EKF_SNC, P_EKF_SNC, y_EKF_SNC, alpha_EKF_SNC] = EKF_SNC(t, YJ3_simulated, R, Qc, X0, P0, warmStart, constants);
 % % error_EKF_SNC = X_EKF_SNC - Xtrue;
 % 
-% n = 9;
-% tau = T/30;
-% % tau = T/60;
-% sigma_DMC = 1e-9;
-% Qc = diag(sigma_DMC^2*ones(1,3));
-% P0_aDMC = diag(ones(3,1) * 3*(sigma_DMC)^2*tau/2);
-% a_DMC = zeros(3,1);
-% X0_DMC = [X0; a_DMC];
-% P0_DMC = blkdiag(P0, P0_aDMC);
-% 
-% [X_CKF_DMC, dx_CKF_DMC, P_CKF_DMC, y_CKF_DMC, alpha_CKF_DMC] = CKF_DMC(t, YJ3_simulated, R, Qc, X0_DMC, zeros(n,1), P0_DMC, tau, constants);
-% error_CKF_DMC = (X_CKF_DMC(1:6,:)+ dx_CKF_DMC(1:6,:)) - Xtrue;
+n = 9;
+tau = T/30;
+% tau = T/60;
+sigma_DMC = 1e-9;
+Qc = diag(sigma_DMC^2*ones(1,3));
+P0_aDMC = diag(ones(3,1) * 3*(sigma_DMC)^2*tau/2);
+a_DMC = zeros(3,1);
+X0_DMC = [X0; a_DMC];
+P0_DMC = blkdiag(P0, P0_aDMC);
+
+[X_CKF_DMC, dx_CKF_DMC, P_CKF_DMC, y_CKF_DMC, alpha_CKF_DMC] = CKF_DMC(t, YJ3_simulated, R, Qc, X0_DMC, zeros(n,1), P0_DMC, tau, constants);
+error_CKF_DMC = (X_CKF_DMC(1:6,:)+ dx_CKF_DMC(1:6,:)) - Xtrue;
 % 
 % [X_EKF_DMC, P_EKF_DMC, y_EKF_DMC, alpha_EKF_DMC] = EKF_DMC(t, YJ3_simulated, R, Qc, X0_DMC, P0_DMC, tau, warmStart, constants);
 % error_EKF_DMC = X_EKF_DMC(1:6,:) - Xtrue;
@@ -198,9 +198,9 @@ error_CKF_SNC = (X_CKF_SNC + dx_CKF_SNC) - Xtrue;
 % RMSresiduals_EKF_DMC = rms(alpha_EKF_DMC, 2, "omitnan");
 
 %% Plot - SNC
-titles = ["CKF-SNC Pre-Fit Residuals vs. Time", "CKF-SNC Post-Fit Residuals vs. Time"];
-plotResiduals_HW3(t, y_CKF_SNC, alpha_CKF_SNC, noise_sd, titles)
-plotErrorAndBounds_HW3(t, error_CKF_SNC, P_CKF_SNC, "CKF-SNC Error vs Time")
+% titles = ["CKF-SNC Pre-Fit Residuals vs. Time", "CKF-SNC Post-Fit Residuals vs. Time"];
+% plotResiduals_HW3(t, y_CKF_SNC, alpha_CKF_SNC, noise_sd, titles)
+% plotErrorAndBounds_HW3(t, error_CKF_SNC, P_CKF_SNC, "CKF-SNC Error vs Time")
 
 % titles = ["EKF Pre-Fit Residuals vs. Time (J3)", "EKF-SNC Post-Fit Residuals vs. Time"];
 % plotResiduals_HW3(t, y_EKF_SNC, alpha_EKF_SNC, noise_sd, titles)
@@ -216,24 +216,24 @@ plotErrorAndBounds_HW3(t, error_CKF_SNC, P_CKF_SNC, "CKF-SNC Error vs Time")
 % plotResiduals_HW3(t, y_EKF_DMC, alpha_EKF_DMC, noise_sd, titles)
 % plotErrorAndBounds_HW3(t, error_EKF_DMC, P_EKF_DMC, "EKF-DMC Error vs Time")
 % 
-% %% a error
-% sig_aCKF = zeros(3, length(t));
-% aJ3 = zeros(3, length(t));
-% P_aCKF = zeros(3,3,length(t));
-% for i = 1:length(t)
-%     S = X_CKF_DMC(:,i)+dx_CKF_DMC(:,i);
-%     x = S(1);
-%     y = S(2);
-%     z = S(3);
-%     r_N = S(1:3);
-%     r = norm(r_N);
-%     v_N = S(4:6);
-% 
-%     P_aCKF(:,:,i) = P_CKF_DMC(7:9,7:9,i);
-%     aJ3(:,i) = 1/2*mu/r^2*(ae/r)^3*J3 * [5*(7*(z/r)^3 - 3*(z/r))*x/r; 5*(7*(z/r)^3 - 3*(z/r))*y/r; 3*(1 - 10*(z/r)^2 + 35/5*(z/r)^4)];
-% end
-% error_aCKF = X_CKF_DMC(7:9,:)+dx_CKF_DMC(7:9,:) - aJ3;
-% plotJ3aError(t, error_aCKF, P_aCKF, "CKF-DMC Acceleration Error vs Time")
+%% a error
+sig_aCKF = zeros(3, length(t));
+aJ3 = zeros(3, length(t));
+P_aCKF = zeros(3,3,length(t));
+for i = 1:length(t)
+    S = X_CKF_DMC(:,i)+dx_CKF_DMC(:,i);
+    x = S(1);
+    y = S(2);
+    z = S(3);
+    r_N = S(1:3);
+    r = norm(r_N);
+    v_N = S(4:6);
+
+    P_aCKF(:,:,i) = P_CKF_DMC(7:9,7:9,i);
+    aJ3(:,i) = 1/2*mu/r^2*(ae/r)^3*J3 * [5*(7*(z/r)^3 - 3*(z/r))*x/r; 5*(7*(z/r)^3 - 3*(z/r))*y/r; 3*(1 - 10*(z/r)^2 + 35/5*(z/r)^4)];
+end
+error_aCKF = X_CKF_DMC(7:9,:)+dx_CKF_DMC(7:9,:) - aJ3;
+plotJ3aError(t, error_aCKF, P_aCKF, "CKF-DMC Acceleration Error vs Time")
 % 
 % sig_aEKF = zeros(3, length(t));
 % aJ3 = zeros(3, length(t));

@@ -138,53 +138,32 @@ iterations = 1;
 % error2a = X_2a_smooth-X_2a_true;
 % plotErrorAndBounds_proj2(tspan_2a, error2a_smooth, P_2a_smooth, "2a State Error and 3$\sigma$ Bounds vs. Time")
 
-Qc = zeros(3);
-% sigma_SNC = 1e-10;
-% Qc = diag(sigma_SNC^2*ones(1,3));
-[X_2a_iterated, Xref_2a_iterated, dx_2a_iterated, P_2a_iterated, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_2a, data_2a, meas_cov, Qc, X0_2a, zeros(n,1), P0_2a, 15, false, constants);
+[X_2a_iterated, Xref_2a_iterated, dx_2a_iterated, P_2a_iterated, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 15, false, constants);
 plotResiduals(tspan_2a, y_2a_iterated, alpha_2a_iterated, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
 error2a_iterated = X_2a_iterated-X_2a_true;
 plotErrorAndBounds_proj2(tspan_2a, error2a_iterated, P_2a_iterated, "2a State Error and 3$\sigma$ Bounds vs. Time")
-
-% notPosDef = zeros(1,length(P_2a_iterated));
-% for i = 1:length(P_2a_iterated)
-%     notPosDef(i) = all(diag(P_2a_iterated(:,:,i))<=0);
-% end
-% sumNotPosDef = sum(notPosDef);
-
-% sigma_SNC = 1e-6;
-% Qc = diag(sigma_SNC^2*ones(1,3));
-% [X_2a_iteratedSmooth, Xref_2a_iteratedSmooth, dx_2a_iteratedSmooth, P_2a_iteratedSmooth, y_2a_iteratedSmooth, alpha_2a_iteratedSmooth] = CKF_proj2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 15, true, constants);
-% plotResiduals(tspan_2a, y_2a_iteratedSmooth, alpha_2a_iteratedSmooth, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
-% error2a_iteratedSmooth = X_2a_iteratedSmooth-X_2a_true;
-% plotErrorAndBounds_proj2(tspan_2a, error2a_iteratedSmooth, P_2a_iteratedSmooth, "2a State Error and 3$\sigma$ Bounds vs. Time")
+notPosDef = zeros(1,length(P_2a_iterated));
+for i = 1:length(P_2a_iterated)
+    notPosDef(i) = all(diag(P_2a_iterated(:,:,i))<=0);
+end
+sumNotPosDef = sum(notPosDef);
 
 t_DCO_2 = tspan_2a(end);
 X_DCO_2 = X_2a_iterated(:,end);
-% X_DCO_2 = X_2a_iteratedSmooth(:,end);
+
+% iterations = 1;
+% [tspan_3RSOI, X_2a_iterated, Xref_2a_iterated, dx_2a_iterated, P_2a_iterated, y_2a_iterated, alpha_2a_iterated] = CKF_3RSOI([data_2a(1,1), data_2a(end,1)*100], data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, iterations, false, constants);
+% plotResiduals(tspan_3RSOI, y_2a_iterated, alpha_2a_iterated, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
+% error2a_iterated = X_2a_iterated-X_2a_true;
+% plotErrorAndBounds_proj2(tspan_3RSOI, error2a_iterated, P_2a_iterated, "2a State Error and 3$\sigma$ Bounds vs. Time")
 
 
 %% B-Plane
-trueBdotR = 14970.824; % km
-trueBdotT = 9796.737; % km
 [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_2, t_DCO_2*100], X_DCO_2, eye(n), constants);
 r3SOI_N = Xvec_to3RSOI(1:3,end);
 v3SOI_N = Xvec_to3RSOI(4:6,end);
-P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
-% P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iteratedSmooth(:,:,end)*STM_fromDCO(:,:,end)';
-P3SOI_N = P3SOI_N(1:6,1:6,end);
+P3SOI_N = P_2a_iterated(:,:,end);
 [BdotR, BdotT, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
-P_B = B_STM*P3SOI_N*B_STM';
-
-figure
-hold on
-plotBplaneCovEllipse(P_B, BdotR, BdotT)
-scatter(BdotR,BdotT, '*')
-scatter(trueBdotR,trueBdotT, '*')
-legend("$3\sigma$ Bounds", "Estimated Target", "True Target", 'Interpreter', 'latex', 'Location','best')
-axis equal
-xlabel("B$\cdot$R", Interpreter="latex")
-ylabel("B$\cdot$T", Interpreter="latex")
-
+r_S2E_N
 %% part 3
 constants.DSS_latlon(2,2) = 355.749444*pi/180;
