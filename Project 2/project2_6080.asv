@@ -174,10 +174,13 @@ v3SOI_N = Xvec_to3RSOI(4:6,end);
 P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
 % P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iteratedSmooth(:,:,end)*STM_fromDCO(:,:,end)';
 P3SOI_N = P3SOI_N(1:6,1:6,end);
-[BdotVec, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
+[BdotVec, LTOF, BN] = Bplane(r3SOI_N, v3SOI_N, muE);
 BdotR_200 = BdotVec(1);
 BdotT_200 = BdotVec(2);
-P_B = B_STM*P3SOI_N*B_STM';
+% P_B = B_STM*P3SOI_N*B_STM';
+[X_overLTOF, STM_overLTOF] = integrateTrajectorySTM_proj2([t23RSOI(end), t23RSOI+LTOF], Xvec_to3RSOI(:,end), STM_fromDCO(:,:,end), constants);
+r_Bcross_N = X_overLTOF(1:3,end);
+v_Bcross_N = X_overLTOF(1:3,end);
 
 figure
 hold on

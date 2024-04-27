@@ -171,13 +171,24 @@ trueBdotVec = [trueBdotR;trueBdotT];
 [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_2, t_DCO_2*100], X_DCO_2, eye(n), constants);
 r3SOI_N = Xvec_to3RSOI(1:3,end);
 v3SOI_N = Xvec_to3RSOI(4:6,end);
-P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
+% P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
 % P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iteratedSmooth(:,:,end)*STM_fromDCO(:,:,end)';
-P3SOI_N = P3SOI_N(1:6,1:6,end);
-[BdotVec, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
+% P3SOI_N = P3SOI_N(1:6,1:6,end);
+[BdotVec, R_hat, T_hat, LTOF, BN] = Bplane(r3SOI_N, v3SOI_N, muE);
 BdotR_200 = BdotVec(1);
 BdotT_200 = BdotVec(2);
-P_B = B_STM*P3SOI_N*B_STM';
+% P_B = B_STM*P3SOI_N*B_STM';
+[X_overLTOF, STM_overLTOF] = integrateTrajectorySTM_proj2([t23RSOI(end), t23RSOI(end)+LTOF], Xvec_to3RSOI(:,end), STM_fromDCO(:,:,end), constants);
+% r_Bcross_N = X_overLTOF(1:3,end);
+% v_Bcross_N = X_overLTOF(1:3,end);
+% BdotVec = [dot(r_Bcross_N,R_hat); dot(r_Bcross_N,T_hat)];
+P_Bcross_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
+P_Bcross_N = P_Bcross_N(1:3,1:3,end);
+P_B = BN*P_Bcross_N*BN';
+P_B = P_B(2:3,2:3);
+
+fprintf("Bplane Error: \n")
+disp(BdotVec-trueBdotVec)
 
 figure
 hold on
@@ -189,42 +200,42 @@ legend("$3\sigma$ Bounds", "Estimated Target", "True Target", 'Interpreter', 'la
 axis equal
 xlabel("B$\cdot$R", Interpreter="latex")
 ylabel("B$\cdot$T", Interpreter="latex")
-
-t_DCOtarg_vec = (50:50:200)*24*60^2;
-t_DCO_vec = zeros(1,length(t_DCOtarg_vec));
-X_DCO_vec = zeros(n,length(t_DCO_vec));
-BdotVec_vec = zeros(2,length(t_DCO_vec));
-% BdotR_vec = zeros(1,length(t_DCO_vec));
-P_DCO_vec = zeros(n,n,length(t_DCO_vec));
-P_3SOI_vec = zeros(6,6,length(t_DCO_vec));
-P_B_vec = zeros(2,2,length(t_DCO_vec));
-Qc = zeros(3);
-% sigma_SNC = 0.5e-8;
-% Qc = diag(sigma_SNC^2*ones(1,3));
-smooth = false;
-figure
-hold on
-for i = 1:length(t_DCO_vec)
-    tspan_temp = tspan_2a(tspan_2a<=t_DCOtarg_vec(i));
-    t_DCO_vec(:,i) = tspan_temp(end);
-    [X_looped, ~, ~, P_looped, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_temp, data_2a, meas_cov, Qc, X0_2a, zeros(n,1), P0_2a, 15, smooth, constants);
-    X_DCO_vec(:,i) = X_looped(:,end);
-    P_DCO_vec(:,:,i) = P_looped(:,:,end);
-    [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_vec(i), t_DCO_vec(end)*100], X_DCO_vec(:,i), eye(n), constants);
-    r3SOI_N = Xvec_to3RSOI(1:3,end);
-    v3SOI_N = Xvec_to3RSOI(4:6,end);
-    P_3SOI_temp = STM_fromDCO(:,:,end)*P_DCO_vec(:,:,i)*STM_fromDCO(:,:,end)';
-    P_3SOI_vec(:,:,i) = P_3SOI_temp(1:6,1:6);
-    [BdotVec_vec(:,i), B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
-    P_B_vec(:,:,i) = B_STM*P3SOI_N*B_STM';
-    ellipse = plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(1,i), BdotVec_vec(2,i));
-    % plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(1,i), BdotVec_vec(2,i));
-    center = scatter(BdotVec_vec(1,i),BdotVec_vec(2,i), '*');
-    center.SeriesIndex = ellipse.SeriesIndex;
-end
-scatter(trueBdotVec(1),trueBdotVec(2), '*')
-axis equal
-legend("50 days", "", "100 days", "", "150 days", "", "200 days", "", "True Target", 'Interpreter', 'latex', 'Location','best')
+% 
+% t_DCOtarg_vec = (50:50:200)*24*60^2;
+% t_DCO_vec = zeros(1,length(t_DCOtarg_vec));
+% X_DCO_vec = zeros(n,length(t_DCO_vec));
+% BdotVec_vec = zeros(2,length(t_DCO_vec));
+% % BdotR_vec = zeros(1,length(t_DCO_vec));
+% P_DCO_vec = zeros(n,n,length(t_DCO_vec));
+% P_3SOI_vec = zeros(6,6,length(t_DCO_vec));
+% P_B_vec = zeros(2,2,length(t_DCO_vec));
+% Qc = zeros(3);
+% % sigma_SNC = 0.5e-8;
+% % Qc = diag(sigma_SNC^2*ones(1,3));
+% smooth = false;
+% figure
+% hold on
+% for i = 1:length(t_DCO_vec)
+%     tspan_temp = tspan_2a(tspan_2a<=t_DCOtarg_vec(i));
+%     t_DCO_vec(:,i) = tspan_temp(end);
+%     [X_looped, ~, ~, P_looped, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_temp, data_2a, meas_cov, Qc, X0_2a, zeros(n,1), P0_2a, 15, smooth, constants);
+%     X_DCO_vec(:,i) = X_looped(:,end);
+%     P_DCO_vec(:,:,i) = P_looped(:,:,end);
+%     [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_vec(i), t_DCO_vec(end)*100], X_DCO_vec(:,i), eye(n), constants);
+%     r3SOI_N = Xvec_to3RSOI(1:3,end);
+%     v3SOI_N = Xvec_to3RSOI(4:6,end);
+%     P_3SOI_temp = STM_fromDCO(:,:,end)*P_DCO_vec(:,:,i)*STM_fromDCO(:,:,end)';
+%     P_3SOI_vec(:,:,i) = P_3SOI_temp(1:6,1:6);
+%     [BdotVec_vec(:,i), B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
+%     P_B_vec(:,:,i) = B_STM*P3SOI_N*B_STM';
+%     ellipse = plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(1,i), BdotVec_vec(2,i));
+%     % plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(1,i), BdotVec_vec(2,i));
+%     center = scatter(BdotVec_vec(1,i),BdotVec_vec(2,i), '*');
+%     center.SeriesIndex = ellipse.SeriesIndex;
+% end
+% scatter(trueBdotVec(1),trueBdotVec(2), '*')
+% axis equal
+% legend("50 days", "", "100 days", "", "150 days", "", "200 days", "", "True Target", 'Interpreter', 'latex', 'Location','best')
 
 %% part 3
 constants.DSS_latlon(2,2) = 355.749444*pi/180;

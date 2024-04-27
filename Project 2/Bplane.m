@@ -1,4 +1,4 @@
-function [BdotVec, B_STM] = Bplane(r_N, v_N, mu)
+function [BdotVec, R_hat, T_hat, LTOF, DCM_BN] = Bplane(r_N, v_N, mu)
 %UNTITLED Summary of this function goes here
 %   outputs BdotVec = [BdotR;BdotT]
     r = norm(r_N);
@@ -16,6 +16,7 @@ function [BdotVec, B_STM] = Bplane(r_N, v_N, mu)
     W_hat = h_N/h;
     Q_hat = cross(W_hat, P_hat);
     S_hat = 1/e*P_hat + sqrt(e^2-1)/e*Q_hat;
+    % S_hat = v_N/v;
 
     % S_hat = v_N/v;
     N_hat = [0;0;1];
@@ -28,10 +29,18 @@ function [BdotVec, B_STM] = Bplane(r_N, v_N, mu)
     BdotR = dot(B_N, R_hat);
     BdotT = dot(B_N, T_hat);
     DCM_BN = [S_hat'; T_hat'; R_hat'];
+    % DCM_BN = [-S_hat'; R_hat'; T_hat'];
+
+    % vinf = sqrt(-mu/a);  
+    vinf = v;
+
+    % Linearized Time of Flight
+    cosNu = dot(r_N/r,P_hat);
+    f = acosh(1 + vinf^2/mu*a*(1-e^2)/(1+e*cosNu));
+    LTOF = mu/vinf^3*(sinh(f)-f);
+
 
     %partials
-    vinf = sqrt(-mu/a);  
-    % vinf = mu/h*sqrt(e^2-1);  
     alpha = vinf^2;
 
     v_part_r = zeros(3);
