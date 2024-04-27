@@ -80,6 +80,18 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
                 end  
             end
         end
+
+        % if smoothed
+        %     [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
+        %     Xref0 = X(:,end);
+        %     dx0 = zeros(n,1);
+        % else
+        %     X = Xref + dx;
+        %     diffx0 = STM_t0(:,:,end)\dx(:,end);
+        %     Xref0 = Xref0+diffx0;
+        %     dx0 = zeros(n,1);
+        % end
+
         diffx0 = STM_t0(:,:,end)\dx(:,end);
         % if all(dx(:,end) < diag(P(:,:,end)).^(1/2))
         RMSresidual_qminus = RMSresidual_pre;
@@ -87,8 +99,8 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
         if all(abs(RMSresidual_pre-RMSresidual_qminus) < 0.01*RMSresidual_pre) && q>1
             fprintf("converged in %d iterations \n", q)
             break
-        elseif q == iterations
-            % fprintf("failed to converge in %d iterations \n", iterations)
+        elseif q == iterations && iterations>1
+            fprintf("failed to converge in %d iterations \n", iterations)
             break
         end
         Xref0 = Xref0+diffx0;

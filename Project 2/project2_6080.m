@@ -57,27 +57,27 @@ options = odeset('RelTol',1e-12,'AbsTol',1e-12);
 [t_traj,S_traj] = ode45(@(t,S) project2ODE(t,S,constants), tspan_traj, S0_traj, options);
 r_traj = S_traj(:,1:3)';
 
-figure
-plot3(r_traj(1,:), r_traj(2,:), r_traj(3,:))
-hold on
-% plotBody([0;0;0], constants.ae*1000)
-plot3(truthTraj(:,2), truthTraj(:,3), truthTraj(:,4), '--')
-axis equal
-grid on
-hold off
-
-trajError = truthTraj-[t_traj, S_traj];
+% figure
+% plot3(r_traj(1,:), r_traj(2,:), r_traj(3,:))
+% hold on
+% % plotBody([0;0;0], constants.ae*1000)
+% plot3(truthTraj(:,2), truthTraj(:,3), truthTraj(:,4), '--')
+% axis equal
+% grid on
+% hold off
+% 
+% trajError = truthTraj-[t_traj, S_traj];
 % final_error = trajError(end, :);
 % fprintf("final state errors:")
 % disp(final_error(1:8))
 % fprintf("final STM errors: \n")
 % disp(reshape(final_error(9:end), n,n))
 
-figure
-subplot(2,1,1)
-semilogy(abs(trajError))
-subplot(2,1,2)
-semilogy(vecnorm(abs(trajError),2,2))
+% figure
+% subplot(2,1,1)
+% semilogy(abs(trajError))
+% subplot(2,1,2)
+% semilogy(vecnorm(abs(trajError),2,2))
 
 % simulate whole trajectory
 as = 696000; % km
@@ -92,35 +92,35 @@ X_2a_true = S_2a(:,1:n)';
 colorS = "#EDB120";
 colorE = "#77AC30";
 
-r_S2E_N = zeros(3,length(tspan_2a));
-for i = 1:length(tspan_2a)
-    [r_S2E_N(:,i), ~, ~] = Ephem(constants.t0+tspan_2a(i)/86400,3, 'EME2000');
-end
-r_E2S_N = -r_S2E_N;
+% r_S2E_N = zeros(3,length(tspan_2a));
+% for i = 1:length(tspan_2a)
+%     [r_S2E_N(:,i), ~, ~] = Ephem(constants.t0+tspan_2a(i)/86400,3, 'EME2000');
+% end
+% r_E2S_N = -r_S2E_N;
 
-figure
-plot3(X_2a_true(1,:), X_2a_true(2,:), X_2a_true(3,:))
-hold on
-plotBody([0;0;0], constants.ae*200, colorE)
-plot3(r_E2S_N(1,:), r_E2S_N(2,:), r_E2S_N(3,:), 'Color', colorS)
-plotBody(-r_S2E_N(:,end), as*10, colorS)
-legend("Spacecraft Trajectory", "Earth (200 scale)", "Sun Trajectory", "Sun at tf (10 scale)")
-axis equal
-grid on
-hold off
-
-
-figure
-hold on
-plotBody([0;0;0], as*10, colorS)
-plot3(r_S2E_N(1,:), r_S2E_N(2,:), r_S2E_N(3,:), 'Color', colorE)
-plotBody(r_S2E_N(:,end), constants.ae*500, colorE)
-plot3(X_2a_true(1,:)+r_S2E_N(1,:), X_2a_true(2,:)+r_S2E_N(2,:), X_2a_true(3,:)+r_S2E_N(3,:))
-scatter3(X_2a_true(1,end)+r_S2E_N(1,end), X_2a_true(2,end)+r_S2E_N(2,end), X_2a_true(3,end)+r_S2E_N(3,end), '*')
+% figure
+% plot3(X_2a_true(1,:), X_2a_true(2,:), X_2a_true(3,:))
+% hold on
+% plotBody([0;0;0], constants.ae*200, colorE)
+% plot3(r_E2S_N(1,:), r_E2S_N(2,:), r_E2S_N(3,:), 'Color', colorS)
+% plotBody(-r_S2E_N(:,end), as*10, colorS)
 % legend("Spacecraft Trajectory", "Earth (200 scale)", "Sun Trajectory", "Sun at tf (10 scale)")
-axis equal
-grid on
-hold off
+% axis equal
+% grid on
+% hold off
+
+
+% figure
+% hold on
+% plotBody([0;0;0], as*10, colorS)
+% plot3(r_S2E_N(1,:), r_S2E_N(2,:), r_S2E_N(3,:), 'Color', colorE)
+% plotBody(r_S2E_N(:,end), constants.ae*500, colorE)
+% plot3(X_2a_true(1,:)+r_S2E_N(1,:), X_2a_true(2,:)+r_S2E_N(2,:), X_2a_true(3,:)+r_S2E_N(3,:))
+% scatter3(X_2a_true(1,end)+r_S2E_N(1,end), X_2a_true(2,end)+r_S2E_N(2,end), X_2a_true(3,end)+r_S2E_N(3,end), '*')
+% % legend("Spacecraft Trajectory", "Earth (200 scale)", "Sun Trajectory", "Sun at tf (10 scale)")
+% axis equal
+% grid on
+% hold off
 
 
 %% part 2 estimate with observations
@@ -152,9 +152,9 @@ plotErrorAndBounds_proj2(tspan_2a, error2a_iterated, P_2a_iterated, "2a State Er
 % end
 % sumNotPosDef = sum(notPosDef);
 
-% sigma_SNC = 1e-6;
+% sigma_SNC = 0.5e-8;
 % Qc = diag(sigma_SNC^2*ones(1,3));
-% [X_2a_iteratedSmooth, Xref_2a_iteratedSmooth, dx_2a_iteratedSmooth, P_2a_iteratedSmooth, y_2a_iteratedSmooth, alpha_2a_iteratedSmooth] = CKF_proj2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 15, true, constants);
+% [X_2a_iteratedSmooth, Xref_2a_iteratedSmooth, dx_2a_iteratedSmooth, P_2a_iteratedSmooth, y_2a_iteratedSmooth, alpha_2a_iteratedSmooth] = CKF_proj2(tspan_2a, data_2a, meas_cov, Qc, X0_2a, zeros(n,1), P0_2a, 15, true, constants);
 % plotResiduals(tspan_2a, y_2a_iteratedSmooth, alpha_2a_iteratedSmooth, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
 % error2a_iteratedSmooth = X_2a_iteratedSmooth-X_2a_true;
 % plotErrorAndBounds_proj2(tspan_2a, error2a_iteratedSmooth, P_2a_iteratedSmooth, "2a State Error and 3$\sigma$ Bounds vs. Time")
@@ -167,24 +167,64 @@ X_DCO_2 = X_2a_iterated(:,end);
 %% B-Plane
 trueBdotR = 14970.824; % km
 trueBdotT = 9796.737; % km
+trueBdotVec = [trueBdotR;trueBdotT];
 [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_2, t_DCO_2*100], X_DCO_2, eye(n), constants);
 r3SOI_N = Xvec_to3RSOI(1:3,end);
 v3SOI_N = Xvec_to3RSOI(4:6,end);
 P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
 % P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iteratedSmooth(:,:,end)*STM_fromDCO(:,:,end)';
 P3SOI_N = P3SOI_N(1:6,1:6,end);
-[BdotR, BdotT, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
+[BdotVec, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
+BdotR_200 = BdotVec(1);
+BdotT_200 = BdotVec(2);
 P_B = B_STM*P3SOI_N*B_STM';
 
 figure
 hold on
-plotBplaneCovEllipse(P_B, BdotR, BdotT)
-scatter(BdotR,BdotT, '*')
-scatter(trueBdotR,trueBdotT, '*')
+plot1 = plotBplaneCovEllipse(P_B, BdotVec(1), BdotVec(2));
+% error_ellipse(P_B, [BdotT; BdotR], 'conf',0.63)
+scatter(BdotVec(1),BdotVec(2), '*')
+scatter(trueBdotVec(1),trueBdotVec(2), '*')
 legend("$3\sigma$ Bounds", "Estimated Target", "True Target", 'Interpreter', 'latex', 'Location','best')
 axis equal
 xlabel("B$\cdot$R", Interpreter="latex")
 ylabel("B$\cdot$T", Interpreter="latex")
+
+t_DCOtarg_vec = (50:50:200)*24*60^2;
+t_DCO_vec = zeros(1,length(t_DCOtarg_vec));
+X_DCO_vec = zeros(n,length(t_DCO_vec));
+BdotVec_vec = zeros(2,length(t_DCO_vec));
+% BdotR_vec = zeros(1,length(t_DCO_vec));
+P_DCO_vec = zeros(n,n,length(t_DCO_vec));
+P_3SOI_vec = zeros(6,6,length(t_DCO_vec));
+P_B_vec = zeros(2,2,length(t_DCO_vec));
+Qc = zeros(3);
+% sigma_SNC = 0.5e-8;
+% Qc = diag(sigma_SNC^2*ones(1,3));
+smooth = false;
+figure
+hold on
+for i = 1:length(t_DCO_vec)
+    tspan_temp = tspan_2a(tspan_2a<=t_DCOtarg_vec(i));
+    t_DCO_vec(:,i) = tspan_temp(end);
+    [X_looped, ~, ~, P_looped, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_temp, data_2a, meas_cov, Qc, X0_2a, zeros(n,1), P0_2a, 15, smooth, constants);
+    X_DCO_vec(:,i) = X_looped(:,end);
+    P_DCO_vec(:,:,i) = P_looped(:,:,end);
+    [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_vec(i), t_DCO_vec(end)*100], X_DCO_vec(:,i), eye(n), constants);
+    r3SOI_N = Xvec_to3RSOI(1:3,end);
+    v3SOI_N = Xvec_to3RSOI(4:6,end);
+    P_3SOI_temp = STM_fromDCO(:,:,end)*P_DCO_vec(:,:,i)*STM_fromDCO(:,:,end)';
+    P_3SOI_vec(:,:,i) = P_3SOI_temp(1:6,1:6);
+    [BdotVec_vec(:,i), B_STM] = Bplane(r3SOI_N, v3SOI_N, muE);
+    P_B_vec(:,:,i) = B_STM*P3SOI_N*B_STM';
+    ellipse = plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(1,i), BdotVec_vec(2,i));
+    % plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(1,i), BdotVec_vec(2,i));
+    center = scatter(BdotVec_vec(1,i),BdotVec_vec(2,i), '*');
+    center.SeriesIndex = ellipse.SeriesIndex;
+end
+scatter(trueBdotVec(1),trueBdotVec(2), '*')
+axis equal
+legend("50 days", "", "100 days", "", "150 days", "", "200 days", "", "True Target", 'Interpreter', 'latex', 'Location','best')
 
 %% part 3
 constants.DSS_latlon(2,2) = 355.749444*pi/180;

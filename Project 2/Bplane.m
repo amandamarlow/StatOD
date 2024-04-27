@@ -1,7 +1,6 @@
-function [BdotR, BdotT, B_STM] = Bplane(r_N, v_N, mu)
+function [BdotVec, B_STM] = Bplane(r_N, v_N, mu)
 %UNTITLED Summary of this function goes here
-%   Detailed explanation goes here
-
+%   outputs BdotVec = [BdotR;BdotT]
     r = norm(r_N);
     v = norm(v_N);
     h_N = cross(r_N, v_N);
@@ -62,7 +61,8 @@ function [BdotR, BdotT, B_STM] = Bplane(r_N, v_N, mu)
     BdotR_part_v = (T_hat'*h_part_v - BdotR*vinf_part_v)/vinf;
     BdotT_part_v = -(R_hat'*h_part_v + BdotT*vinf_part_v)/vinf;
 
-    B_STM = [BdotR_part_r, BdotR_part_v; BdotT_part_r, BdotT_part_v];
-
+    % B_STM = [BdotR_part_r, BdotR_part_v; BdotT_part_r, BdotT_part_v];
+    B_STM = [BdotT_part_r, BdotT_part_v; BdotR_part_r, BdotR_part_v];
+    BdotVec = [BdotR; BdotT];
 end
 

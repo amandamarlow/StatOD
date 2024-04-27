@@ -1,4 +1,4 @@
-function [X, Xref, dx, P, y, alpha] = CKF_3RSOI(t, data, R, Qc, Xref0, dx0, P0, iterations, smoothed, constants)
+function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, iterations, smoothed, constants)
 %Classic/Linearized Kalman Filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -8,47 +8,29 @@ function [X, Xref, dx, P, y, alpha] = CKF_3RSOI(t, data, R, Qc, Xref0, dx0, P0, 
 
     
 
-%     % Preallocate
-% %     t = Ymat(:,1); % time after epoch [s] corresponds to measurement vector
-%     n = length(Xref0);
-%     Xref = zeros(n, length(t));
-%     dx = zeros(n, length(t));
-%     P = zeros(n, n, length(t));
-%     P_ap = zeros(n, n, length(t));
-%     STM = zeros(n, n, length(t));
-%     y = NaN(2, length(t)); % pre-fit residual
-%     alpha = NaN(2, length(t)); % post-fit residual
-%     j = 1;
-%     %% Initialize
-%     Xref(:,1) = Xref0;
-%     % dx(:,1) = dx0;
-%     P(:,:,1) = P0;
-%     P_ap(:,:,1) = P0;
-%     STM(:,:,1) = eye(n);
-%     RMSresidual_pre = zeros(2,1);
+    % Preallocate
+%     t = Ymat(:,1); % time after epoch [s] corresponds to measurement vector
+    n = length(Xref0);
+    Xref = zeros(n, length(t));
+    dx = zeros(n, length(t));
+    P = zeros(n, n, length(t));
+    P_ap = zeros(n, n, length(t));
+    STM = zeros(n, n, length(t));
+    y = NaN(2, length(t)); % pre-fit residual
+    alpha = NaN(2, length(t)); % post-fit residual
+    j = 1;
+    %% Initialize
+    Xref(:,1) = Xref0;
+    % dx(:,1) = dx0;
+    P(:,:,1) = P0;
+    P_ap(:,:,1) = P0;
+    STM(:,:,1) = eye(n);
+    RMSresidual_pre = zeros(2,1);
     
     for q = 1:iterations
         dx(:,1) = dx0;
         %% Integrate reference trajectory and STM from t(i-1) to t(i)
-        [t, Xref, STM_t0] = integrateTo3RSOI(t, Xref0, STM(:,:,1), constants);
-
-        % Preallocate
-        n = length(Xref0);
-        dx = zeros(n, length(t));
-        P = zeros(n, n, length(t));
-        P_ap = zeros(n, n, length(t));
-        % STM = zeros(n, n, length(t));
-        y = NaN(2, length(t)); % pre-fit residual
-        alpha = NaN(2, length(t)); % post-fit residual
-        j = 1;
-        %% Initialize
-        Xref(:,1) = Xref0;
-        % dx(:,1) = dx0;
-        P(:,:,1) = P0;
-        P_ap(:,:,1) = P0;
-        STM(:,:,1) = eye(n);
-        RMSresidual_pre = zeros(2,1);
-
+        [Xref, STM_t0] = integrateTrajectorySTM_proj2(t, Xref0, STM(:,:,1), constants);
         for stnNum = 1:3
             Y = data(1,[stnNum+1, stnNum+4])';
             if ~isnan(Y(1))
@@ -98,26 +80,43 @@ function [X, Xref, dx, P, y, alpha] = CKF_3RSOI(t, data, R, Qc, Xref0, dx0, P0, 
                 end  
             end
         end
-        diffx0 = STM_t0(:,:,end)\dx(:,end);
+
+        if smoothed
+            [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
+            Sk = P(:,:,k)*STM_t0(:,:,end).'/P_ap(:,:,end);
+            dx_smooth = dx(:,k) + Sk*(dx_smooth(:,k+1) - STM(:,:,k+1)*dx(:,k));
+            state_smooth(:,k) = X_ref(:,k) + dx_smooth(:,k);
+            % P_smooth(:,:,k) = P(:,:,k) + Sk*(P(:,:,k+1) - P_ap(:,:,k+1))*Sk.';
+            P_smooth(:,:,k) = P(:,:,k) + Sk*(P_smooth(:,:,k+1) - P_ap(:,:,k+1))*Sk.';
+            Xref0 = X(:,end);
+            dx0 = zeros(n,1);
+        else
+            X = Xref + dx;
+            diffx0 = STM_t0(:,:,end)\dx(:,end);
+            Xref0 = Xref0+diffx0;
+            dx0 = zeros(n,1);
+        end
+
+        % diffx0 = STM_t0(:,:,end)\dx(:,end);
         % if all(dx(:,end) < diag(P(:,:,end)).^(1/2))
         RMSresidual_qminus = RMSresidual_pre;
         RMSresidual_pre = sqrt(1/length(t)*sum(y.^2, 2));
         if all(abs(RMSresidual_pre-RMSresidual_qminus) < 0.01*RMSresidual_pre) && q>1
             fprintf("converged in %d iterations \n", q)
             break
-        elseif q == iterations
-            % fprintf("failed to converge in %d iterations \n", iterations)
+        elseif q == iterations && iterations>1
+            fprintf("failed to converge in %d iterations \n", iterations)
             break
         end
-        Xref0 = Xref0+diffx0;
-        dx0 = zeros(n,1);
+        % Xref0 = Xref0+diffx0;
+        % dx0 = zeros(n,1);
     end
 
-    if smoothed
-        [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
-    else
-        X = Xref + dx;
-    end
+    % if smoothed
+    %     [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
+    % else
+    %     X = Xref + dx;
+    % end
     
 end
 
