@@ -71,6 +71,8 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
                         if ~isnan(Y(1))
                             [GofXt, H] = GandH_proj2(t(i), Xref(:,i), stnNum, constants);
                             y(:,i) = Y - GofXt; % pre-fit residual
+                            condition(c) = cond(H*P_ap(:,:,i)*H' + R);
+
                             K = P_ap(:,:,i)*H'/(H*P_ap(:,:,i)*H' + R); % kalman gain
                             dx(:,i) = dx_ap + K*(y(:,i) - H*dx_ap);
                             P(:,:,i) = (eye(n) - K*H)*P_ap(:,:,i)*(eye(n) - K*H)' + K*R*K';
@@ -81,23 +83,18 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
             end
         end
 
-        if smoothed
-            [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
-            Sk = P(:,:,k)*STM_t0(:,:,end).'/P_ap(:,:,end);
-            dx_smooth = dx(:,k) + Sk*(dx_smooth(:,k+1) - STM(:,:,k+1)*dx(:,k));
-            state_smooth(:,k) = X_ref(:,k) + dx_smooth(:,k);
-            % P_smooth(:,:,k) = P(:,:,k) + Sk*(P(:,:,k+1) - P_ap(:,:,k+1))*Sk.';
-            P_smooth(:,:,k) = P(:,:,k) + Sk*(P_smooth(:,:,k+1) - P_ap(:,:,k+1))*Sk.';
-            Xref0 = X(:,end);
-            dx0 = zeros(n,1);
-        else
-            X = Xref + dx;
-            diffx0 = STM_t0(:,:,end)\dx(:,end);
-            Xref0 = Xref0+diffx0;
-            dx0 = zeros(n,1);
-        end
+        % if smoothed
+        %     [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
+        %     Xref0 = X(:,end);
+        %     dx0 = zeros(n,1);
+        % else
+        %     X = Xref + dx;
+        %     diffx0 = STM_t0(:,:,end)\dx(:,end);
+        %     Xref0 = Xref0+diffx0;
+        %     dx0 = zeros(n,1);
+        % end
 
-        % diffx0 = STM_t0(:,:,end)\dx(:,end);
+        diffx0 = STM_t0(:,:,end)\dx(:,end);
         % if all(dx(:,end) < diag(P(:,:,end)).^(1/2))
         RMSresidual_qminus = RMSresidual_pre;
         RMSresidual_pre = sqrt(1/length(t)*sum(y.^2, 2));
@@ -108,15 +105,15 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
             fprintf("failed to converge in %d iterations \n", iterations)
             break
         end
-        % Xref0 = Xref0+diffx0;
-        % dx0 = zeros(n,1);
+        Xref0 = Xref0+diffx0;
+        dx0 = zeros(n,1);
     end
 
-    % if smoothed
-    %     [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
-    % else
-    %     X = Xref + dx;
-    % end
+    if smoothed
+        [dx, X, P] = smoother(t, Xref, dx, P, P_ap, STM);
+    else
+        X = Xref + dx;
+    end
     
 end
 

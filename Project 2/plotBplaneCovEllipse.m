@@ -1,4 +1,4 @@
-function [plotname] = plotBplaneCovEllipse(cov, BdotR, BdotT)
+function [plotname] = plotBplaneCovEllipse(cov, BdotVec)
 %         %# substract mean
 %         Mu = zeros(2,1);
 %         % X0 = bsxfun(@minus, X, Mu);
@@ -28,6 +28,6 @@ function [plotname] = plotBplaneCovEllipse(cov, BdotR, BdotT)
     xy_vect = [cos(p'),sin(p')] * sqrt(eigval) * eigvec'; % Transformation
     x_vect = xy_vect(:,1);
     y_vect = xy_vect(:,2);
-    plotname = plot(3*x_vect+BdotR, 3*y_vect+BdotT);
+    plotname = plot(3*x_vect+BdotVec(1), 3*y_vect+BdotVec(2), '--');
 end
 

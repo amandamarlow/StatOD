@@ -1,0 +1,23 @@
+function [] = plotBplane(BdotVec_vec, P_B_vec, legendStrings, trueBdotVec, earthRad)
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+figure
+hold on
+for i = 1:length(BdotVec_vec)
+    ellipse = plotBplaneCovEllipse(P_B_vec(:,:,i), BdotVec_vec(:,i));
+    center = scatter(BdotVec_vec(1,i),BdotVec_vec(2,i), '*');
+    center.SeriesIndex = ellipse.SeriesIndex;
+end
+scatter(trueBdotVec(1),trueBdotVec(2), '*')
+if earthRad > 0
+    colorE = [0.4660 0.6740 0.1880];
+    circle(0,0,earthRad, colorE)
+end
+axis equal
+grid on
+xlabel("B$\cdot$T", "Interpreter","latex")
+ylabel("B$\cdot$R", "Interpreter","latex")
+legend(legendStrings, "True Target", "Earth", 'Interpreter', 'latex', 'Location','best')
+
+end
+

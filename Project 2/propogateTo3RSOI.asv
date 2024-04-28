@@ -1,0 +1,13 @@
+function [outputArg1,outputArg2] = propogateTo3RSOI(X_DCO, P_DCO)
+
+    [X_DCO, ~, ~, P_DCO, ~, ~] = CKF_proj2(tspan_temp, data_2, meas_cov, Qc, X0_2a, zeros(n,1), P0_2a, iterations, smooth, constants);
+    X_DCO_vec(:,i) = X_DCO(:,end);
+    P_DCO_vec(:,:,i) = P_DCO(:,:,end);
+    [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_vec(i), t_DCO_vec(i)*100], X_DCO_vec(:,i), eye(n), constants);
+    r3SOI_N(:,i) = Xvec_to3RSOI(1:3,end);
+    v3SOI_N(:,i) = Xvec_to3RSOI(4:6,end);
+    P_3SOI_temp = STM_fromDCO(:,:,end)*P_DCO_vec(:,:,i)*STM_fromDCO(:,:,end)';
+    P_3SOI_vec(:,:,i) = P_3SOI_temp(1:6,1:6);
+
+end
+
