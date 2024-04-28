@@ -1,4 +1,4 @@
-function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, iterations, smoothed, constants)
+function [X, Xref, dx, P, y, alpha, condition] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, iterations, smoothed, constants)
 %Classic/Linearized Kalman Filter
 %   Y = Measurement Matrix -> [time after epoch [s], station number,
 %   range, rangeRate]
@@ -18,6 +18,7 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
     STM = zeros(n, n, length(t));
     y = NaN(2, length(t)); % pre-fit residual
     alpha = NaN(2, length(t)); % post-fit residual
+    condition = NaN(1, length(t)); % post-fit residual
     j = 1;
     %% Initialize
     Xref(:,1) = Xref0;
@@ -48,15 +49,13 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
             dx_ap = STM(:,:,i)*dx(:,i-1); % a priori state deviation estimate
             %% SNC
             dt = t(i) - t(i-1);
-            if t(i) - data(j,1) > 1000
-                Qd = zeros(n);
-            else
+            % if t(i) - data(j,1) > 1000
+            %     Qd = zeros(n);
+            % else
                 Qd = zeros(n);
                 Qd(1:6,1:6) = [dt^3/3*Qc, dt^2/2*Qc;
                     dt^2/2*Qc, dt*Qc];
-            end
-            % Qd = [dt^3/3*Qc, dt^2/2*Qc;
-            %     dt^2/2*Qc, dt*Qc];
+            % end
             P_ap(:,:,i) = STM(:,:,i)*P(:,:,i-1)*STM(:,:,i)' + Qd;
             P_ap(:,:,i) = 1/2*(P_ap(:,:,i) + P_ap(:,:,i)');
             %% Compute observation deviation, observation-state matrix, kalman gain matrix
@@ -71,6 +70,7 @@ function [X, Xref, dx, P, y, alpha] = CKF_proj2(t, data, R, Qc, Xref0, dx0, P0, 
                         if ~isnan(Y(1))
                             [GofXt, H] = GandH_proj2(t(i), Xref(:,i), stnNum, constants);
                             y(:,i) = Y - GofXt; % pre-fit residual
+                            condition(i) = cond(H*P_ap(:,:,i)*H' + R);
                             K = P_ap(:,:,i)*H'/(H*P_ap(:,:,i)*H' + R); % kalman gain
                             dx(:,i) = dx_ap + K*(y(:,i) - H*dx_ap);
                             P(:,:,i) = (eye(n) - K*H)*P_ap(:,:,i)*(eye(n) - K*H)' + K*R*K';
