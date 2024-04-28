@@ -24,7 +24,8 @@ function [BdotVec, B_STM] = Bplane(r_N, v_N, mu, varyShat)
     % T_hat = cross(V_hat, S_hat)/norm(cross(V_hat, S_hat));
     R_hat = cross(S_hat, T_hat);
 
-    B_N = b*cross(S_hat, W_hat);
+    % B_N = b*cross(S_hat, W_hat);
+    B_N = cross(S_hat,h_N)/v;
 
     BdotR = dot(B_N, R_hat);
     BdotT = dot(B_N, T_hat);
