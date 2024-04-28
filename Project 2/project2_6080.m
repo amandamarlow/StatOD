@@ -128,7 +128,7 @@ colorE = [0.4660 0.6740 0.1880];
 
 %% part 2 estimate with observations
 
-% constants.DSS_latlon(2,2) = -355.749444*pi/180;
+constants.DSS_latlon(2,2) = -355.749444*pi/180;
 % 
 % iterations = 1;
 % % [X_2a, Xref_2a, dx_2a, P_2a, y_2a, alpha_2a] = CKF_proj2(tspan_2a, data_2a, meas_cov, zeros(3), X0_2a, zeros(n,1), P0_2a, 1, false, constants);
@@ -161,109 +161,108 @@ plotErrorAndBounds_proj2(tspan_2a, error2a_iterated, P_2a_iterated, "2a State Er
 % % plotResiduals(tspan_2a, y_2a_iteratedSmooth, alpha_2a_iteratedSmooth, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
 % % error2a_iteratedSmooth = X_2a_iteratedSmooth-X_2a_true;
 % % plotErrorAndBounds_proj2(tspan_2a, error2a_iteratedSmooth, P_2a_iteratedSmooth, "2a State Error and 3$\sigma$ Bounds vs. Time")
-% 
-t_DCO_2 = tspan_2a(end);
-X_DCO_2 = X_2a_iterated(:,end);
-% X_DCO_2 = X_2a_iteratedSmooth(:,end);
-% 
-% 
+
 %% B-Plane
-trueBdotR = 14970.824; % km
-trueBdotT = 9796.737; % km
-% trueBdotVec = [trueBdotR;trueBdotT];
-trueBdotVec = [trueBdotT;trueBdotR];
+% t_DCO_2 = tspan_2a(end);
+% X_DCO_2 = X_2a_iterated(:,end);
+% % X_DCO_2 = X_2a_iteratedSmooth(:,end);
 
-[t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_2, t_DCO_2*100], X_DCO_2, eye(n), constants);
-r3SOI_N = Xvec_to3RSOI(1:3,end);
-v3SOI_N = Xvec_to3RSOI(4:6,end);
-P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
-% P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iteratedSmooth(:,:,end)*STM_fromDCO(:,:,end)';
-P3SOI_N = P3SOI_N(1:6,1:6,end);
-varyShat = true;
-[BdotVec, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE, varyShat);
+% trueBdotR = 14970.824; % km
+% trueBdotT = 9796.737; % km
+% % trueBdotVec = [trueBdotR;trueBdotT];
+% trueBdotVec = [trueBdotT;trueBdotR];
+% 
+% [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_2, t_DCO_2*100], X_DCO_2, eye(n), constants);
+% r3SOI_N = Xvec_to3RSOI(1:3,end);
+% v3SOI_N = Xvec_to3RSOI(4:6,end);
+% P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iterated(:,:,end)*STM_fromDCO(:,:,end)';
+% % P3SOI_N = STM_fromDCO(:,:,end)*P_2a_iteratedSmooth(:,:,end)*STM_fromDCO(:,:,end)';
+% P3SOI_N = P3SOI_N(1:6,1:6,end);
+% varyShat = true;
 % [BdotVec, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE, varyShat);
-P_B = B_STM*P3SOI_N*B_STM';
-
-fprintf("B-Plane Error: \n")
-disp(BdotVec-trueBdotVec)
-
-figure
-hold on
-plot1 = plotBplaneCovEllipse(P_B, BdotVec);
-% error_ellipse(P_B, [BdotT; BdotR], 'conf',0.63)
-scatter(BdotVec(1),BdotVec(2), '*')
-scatter(trueBdotVec(1),trueBdotVec(2), '*')
-legend("$3\sigma$ Bounds", "Estimated Target", "True Target", 'Interpreter', 'latex', 'Location','best')
-axis equal
-xlabel("B$\cdot$T", Interpreter="latex")
-ylabel("B$\cdot$R", Interpreter="latex")
-
-t_DCOtarg_vec = (50:50:200)*24*60^2;
-t_DCO_vec = zeros(1,length(t_DCOtarg_vec));
-X_DCO_vec = zeros(n,length(t_DCO_vec));
-BdotVec_vec = zeros(2,length(t_DCO_vec));
-P_DCO_vec = zeros(n,n,length(t_DCO_vec));
-P_3SOI_vec = zeros(6,6,length(t_DCO_vec));
-P_B_vec = zeros(2,2,length(t_DCO_vec));
-Qc = zeros(3);
-% sigma_SNC = 0.5e-8;
-% Qc = diag(sigma_SNC^2*ones(1,3));
-smooth = false;
-iterations = 15;
-for i = 1:length(t_DCO_vec)
-    tspan_temp = tspan_2a(tspan_2a<=t_DCOtarg_vec(i));
-    t_DCO_vec(i) = tspan_temp(end);
-    [X_looped, ~, ~, P_looped, ~, ~, ~] = CKF_proj2(tspan_temp, data_2, meas_cov, Qc, X0_2, zeros(n,1), P0_2, iterations, smooth, constants);
-    X_DCO_vec(:,i) = X_looped(:,end);
-    P_DCO_vec(:,:,i) = P_looped(:,:,end);
-    [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_vec(i), t_DCO_vec(i)*100], X_DCO_vec(:,i), eye(n), constants);
-    r3SOI_N(:,i) = Xvec_to3RSOI(1:3,end);
-    v3SOI_N(:,i) = Xvec_to3RSOI(4:6,end);
-    P_3SOI_temp = STM_fromDCO(:,:,end)*P_DCO_vec(:,:,i)*STM_fromDCO(:,:,end)';
-    P_3SOI_vec(:,:,i) = P_3SOI_temp(1:6,1:6);
-end
-
-%% B-Plane Plotting
-BdotVec_fixS = zeros(2,length(t_DCO_vec));
-P_B_fixS = zeros(2,2,length(t_DCO_vec));
-BdotVec_varS = zeros(2,length(t_DCO_vec));
-P_B_varS = zeros(2,2,length(t_DCO_vec));
-for i = 1:length(t_DCO_vec)
-    [BdotVec_fixS(:,i), B_STM_fixLoop] = Bplane(r3SOI_N(:,i), v3SOI_N(:,i), muE, false);
-    [BdotVec_varS(:,i), B_STM_varLoop] = Bplane(r3SOI_N(:,i), v3SOI_N(:,i), muE, true);
-    P_B_fixS(:,:,i) = B_STM_fixLoop*P_3SOI_vec(:,:,i)*B_STM_fixLoop';
-    P_B_varS(:,:,i) = B_STM_varLoop*P_3SOI_vec(:,:,i)*B_STM_varLoop';
-end
-legendStrings = ["50 days", "", "100 days", "", "150 days", "", "200 days", ""];
-plotBplane(BdotVec_fixS, P_B_fixS, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", trueBdotVec, constants.ae)
-plotBplane(BdotVec_varS, P_B_varS, legendStrings, "B-Plane (Variable $\hat{S}$) - Question 2h", trueBdotVec, constants.ae)
-plotBplane(BdotVec_fixS, P_B_fixS, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", trueBdotVec, 0)
-plotBplane(BdotVec_varS, P_B_varS, legendStrings, "B-Plane (Variable $\hat{S}$) - Question 2h", trueBdotVec, 0)
-
-% %% part 3
-% constants.DSS_latlon(2,2) = 355.749444*pi/180;
-% tspan_3 = data_3(:,1);
-% X0_3 = [-274096770.76544; -92859266.4499061; -40199493.6677441; 32.6704564599943; -8.93838913761049; -3.87881914050316; 1.0]; % X km, Y km, Z km, VX km/sec, VY km/sec, VZ km/sec, CR
-% P0_3 = P0_2;
+% % [BdotVec, B_STM] = Bplane(r3SOI_N, v3SOI_N, muE, varyShat);
+% P_B = B_STM*P3SOI_N*B_STM';
 % 
-% % Qc = zeros(3);
-% sigma_SNC = 1e-6; % 1e-7 too little for bad data
-% Qc = diag(sigma_SNC^2*ones(1,3));
-% [X_3_lkf, Xref_3_lkf, dx_3_lkf, P_3_lkf, y_3_lkf, alpha_3_lkf, cond_lkf] = CKF_proj2(tspan_3, data_3, meas_cov, Qc, X0_2, zeros(n,1), P0_2, 15, false, constants);
-% plotResiduals(tspan_3, y_3_lkf, alpha_3_lkf, [rngNoise, rngRtNoise], ["Part 3 Pre-Fit Residuals vs. Time", "Part 3 Post-Fit Residuals vs. Time"])
-% X_DCO_lkf = X_3_lkf(:,end);
-% P_DCO_lkf = P_3_lkf(:,:,end);
+% fprintf("B-Plane Error: \n")
+% disp(BdotVec-trueBdotVec)
 % 
-% [~, r3SOI_3, v3SOI_3, P_3SOI] = propogateTo3RSOI(tspan_3(end), X_DCO_lkf, P_DCO_lkf, constants);
-% varyShat = false;
-% [BdotVec_3, B_STM_3] = Bplane(r3SOI_3, v3SOI_3, muE, varyShat);
-% P_B_3 = B_STM_3*P_3SOI*B_STM_3';
-% legendStrings = ["3$\sigma$", "Estimated Target"];
-% plotBplane(BdotVec_3, P_B_3, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", [], constants.ae)
-% 
-% condCheck = log(cond_lkf);
 % figure
-% plot(condCheck)
 % hold on
-% yline(15)
-% title("Condition Number of $(H*P^-*H' + R)$", 'Interpreter','latex')
+% plot1 = plotBplaneCovEllipse(P_B, BdotVec);
+% % error_ellipse(P_B, [BdotT; BdotR], 'conf',0.63)
+% scatter(BdotVec(1),BdotVec(2), '*')
+% scatter(trueBdotVec(1),trueBdotVec(2), '*')
+% legend("$3\sigma$ Bounds", "Estimated Target", "True Target", 'Interpreter', 'latex', 'Location','best')
+% axis equal
+% xlabel("B$\cdot$T", Interpreter="latex")
+% ylabel("B$\cdot$R", Interpreter="latex")
+% 
+% t_DCOtarg_vec = (50:50:200)*24*60^2;
+% t_DCO_vec = zeros(1,length(t_DCOtarg_vec));
+% X_DCO_vec = zeros(n,length(t_DCO_vec));
+% BdotVec_vec = zeros(2,length(t_DCO_vec));
+% P_DCO_vec = zeros(n,n,length(t_DCO_vec));
+% P_3SOI_vec = zeros(6,6,length(t_DCO_vec));
+% P_B_vec = zeros(2,2,length(t_DCO_vec));
+% Qc = zeros(3);
+% % sigma_SNC = 0.5e-8;
+% % Qc = diag(sigma_SNC^2*ones(1,3));
+% smooth = false;
+% iterations = 15;
+% for i = 1:length(t_DCO_vec)
+%     tspan_temp = tspan_2a(tspan_2a<=t_DCOtarg_vec(i));
+%     t_DCO_vec(i) = tspan_temp(end);
+%     [X_looped, ~, ~, P_looped, ~, ~, ~] = CKF_proj2(tspan_temp, data_2, meas_cov, Qc, X0_2, zeros(n,1), P0_2, iterations, smooth, constants);
+%     X_DCO_vec(:,i) = X_looped(:,end);
+%     P_DCO_vec(:,:,i) = P_looped(:,:,end);
+%     [t23RSOI, Xvec_to3RSOI, STM_fromDCO] = integrateTo3RSOI([t_DCO_vec(i), t_DCO_vec(i)*100], X_DCO_vec(:,i), eye(n), constants);
+%     r3SOI_N(:,i) = Xvec_to3RSOI(1:3,end);
+%     v3SOI_N(:,i) = Xvec_to3RSOI(4:6,end);
+%     P_3SOI_temp = STM_fromDCO(:,:,end)*P_DCO_vec(:,:,i)*STM_fromDCO(:,:,end)';
+%     P_3SOI_vec(:,:,i) = P_3SOI_temp(1:6,1:6);
+% end
+% 
+% %% B-Plane Plotting
+% BdotVec_fixS = zeros(2,length(t_DCO_vec));
+% P_B_fixS = zeros(2,2,length(t_DCO_vec));
+% BdotVec_varS = zeros(2,length(t_DCO_vec));
+% P_B_varS = zeros(2,2,length(t_DCO_vec));
+% for i = 1:length(t_DCO_vec)
+%     [BdotVec_fixS(:,i), B_STM_fixLoop] = Bplane(r3SOI_N(:,i), v3SOI_N(:,i), muE, false);
+%     [BdotVec_varS(:,i), B_STM_varLoop] = Bplane(r3SOI_N(:,i), v3SOI_N(:,i), muE, true);
+%     P_B_fixS(:,:,i) = B_STM_fixLoop*P_3SOI_vec(:,:,i)*B_STM_fixLoop';
+%     P_B_varS(:,:,i) = B_STM_varLoop*P_3SOI_vec(:,:,i)*B_STM_varLoop';
+% end
+% legendStrings = ["50 days", "", "100 days", "", "150 days", "", "200 days", ""];
+% plotBplane(BdotVec_fixS, P_B_fixS, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", trueBdotVec, constants.ae)
+% plotBplane(BdotVec_varS, P_B_varS, legendStrings, "B-Plane (Variable $\hat{S}$) - Question 2h", trueBdotVec, constants.ae)
+% plotBplane(BdotVec_fixS, P_B_fixS, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", trueBdotVec, 0)
+% plotBplane(BdotVec_varS, P_B_varS, legendStrings, "B-Plane (Variable $\hat{S}$) - Question 2h", trueBdotVec, 0)
+
+%% part 3
+constants.DSS_latlon(2,2) = 355.749444*pi/180;
+tspan_3 = data_3(:,1);
+X0_3 = [-274096770.76544; -92859266.4499061; -40199493.6677441; 32.6704564599943; -8.93838913761049; -3.87881914050316; 1.0]; % X km, Y km, Z km, VX km/sec, VY km/sec, VZ km/sec, CR
+P0_3 = P0_2;
+
+% Qc = zeros(3);
+sigma_SNC = 1e-6; % 1e-7 too little for bad data
+Qc = diag(sigma_SNC^2*ones(1,3));
+[X_3_lkf, Xref_3_lkf, dx_3_lkf, P_3_lkf, y_3_lkf, alpha_3_lkf, cond_lkf] = CKF_proj2(tspan_3, data_3, meas_cov, Qc, X0_2, zeros(n,1), P0_2, 15, false, constants);
+plotResiduals(tspan_3, y_3_lkf, alpha_3_lkf, [rngNoise, rngRtNoise], ["Part 3 Pre-Fit Residuals vs. Time", "Part 3 Post-Fit Residuals vs. Time"])
+X_DCO_lkf = X_3_lkf(:,end);
+P_DCO_lkf = P_3_lkf(:,:,end);
+
+[~, r3SOI_3, v3SOI_3, P_3SOI] = propogateTo3RSOI(tspan_3(end), X_DCO_lkf, P_DCO_lkf, constants);
+varyShat = false;
+[BdotVec_3, B_STM_3] = Bplane(r3SOI_3, v3SOI_3, muE, varyShat);
+P_B_3 = B_STM_3*P_3SOI*B_STM_3';
+legendStrings = ["3$\sigma$", "Estimated Target"];
+plotBplane(BdotVec_3, P_B_3, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", [], constants.ae)
+
+condCheck = log(cond_lkf);
+figure
+plot(condCheck)
+hold on
+yline(15)
+title("Condition Number of $(H*P^-*H' + R)$", 'Interpreter','latex')
