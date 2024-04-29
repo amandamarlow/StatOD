@@ -18,13 +18,16 @@ truthTraj(:,end) = [];
 % setup synamics
 t0 = 2456296.25; % JD
 constants.t0 = t0;
-constants.muS = 132712440017.987; % km^3/s^2 gravitiational parameter of sun
+muS = 132712440017.987; % km^3/s^2 gravitiational parameter of sun
+constants.muS = muS;
 % constants.muE = 398600.4415; % [km^3/s^2] earth's gravitational parameter
 srp_flux = 1357; % W/m^2 at 1 AU
 c = 299792458; % m/s
 constants.AU = 149597870.7; % km
-constants.p_srAU = srp_flux/c*1000; % kN
-constants.a2m = 0.01e-6; % km^2/kg
+p_srAU = srp_flux/c*1000; % kN
+constants.p_srAU = p_srAU;
+a2m = 0.01e-6; % km^2/kg
+constants.a2m = a2m;
 RSOI = 925000; % km
 constants.RSOI = RSOI;
 [~, ~, muE] = Ephem(t0,3,'EME2000');
@@ -32,7 +35,8 @@ constants.RSOI = RSOI;
 % measurement setup
 constants.theta0 = 0;
 constants.omegaE = 7.29211585275553e-5; % rad/s
-constants.ae = 6378.1363; % km
+ae = 6378.1363; % km
+constants.ae = ae;
 DSS_34 = [-35.398333*pi/180, 148.981944*pi/180, 0.691750]; % [lat rad; lon rad; altitude km]
 DSS_65 = [40.427222*pi/180, 355.749444*pi/180, 0.834539]; % [lat rad; lon rad; altitude km] NEGATIVE ONLY IN PART 2
 DSS_13 = [35.247164*pi/180, 243.205*pi/180, 1.07114904]; % [lat rad; lon rad; altitude km]
@@ -141,13 +145,13 @@ constants.DSS_latlon(2,2) = -355.749444*pi/180;
 % % error2a = X_2a_smooth-X_2a_true;
 % % plotErrorAndBounds_proj2(tspan_2a, error2a_smooth, P_2a_smooth, "2a State Error and 3$\sigma$ Bounds vs. Time")
 % 
-Qc = zeros(3);
-% sigma_SNC = 1e-10;
-% Qc = diag(sigma_SNC^2*ones(1,3));
-[X_2a_iterated, Xref_2a_iterated, dx_2a_iterated, P_2a_iterated, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_2a, data_2, meas_cov, Qc, X0_2, zeros(n,1), P0_2, 15, false, constants);
-plotResiduals(tspan_2a, y_2a_iterated, alpha_2a_iterated, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
-error2a_iterated = X_2a_iterated-X_2a_true;
-plotErrorAndBounds_proj2(tspan_2a, error2a_iterated, P_2a_iterated, "2a State Error and 3$\sigma$ Bounds vs. Time")
+% Qc = zeros(3);
+% % sigma_SNC = 1e-10;
+% % Qc = diag(sigma_SNC^2*ones(1,3));
+% [X_2a_iterated, Xref_2a_iterated, dx_2a_iterated, P_2a_iterated, y_2a_iterated, alpha_2a_iterated] = CKF_proj2(tspan_2a, data_2, meas_cov, Qc, X0_2, zeros(n,1), P0_2, 15, false, constants);
+% plotResiduals(tspan_2a, y_2a_iterated, alpha_2a_iterated, [rngNoise, rngRtNoise], ["2a Pre-Fit Residuals vs. Time", "2a Post-Fit Residuals vs. Time"])
+% error2a_iterated = X_2a_iterated-X_2a_true;
+% plotErrorAndBounds_proj2(tspan_2a, error2a_iterated, P_2a_iterated, "2a State Error and 3$\sigma$ Bounds vs. Time")
 % 
 % % notPosDef = zeros(1,length(P_2a_iterated));
 % % for i = 1:length(P_2a_iterated)
@@ -245,20 +249,64 @@ tspan_3 = data_3(:,1);
 X0_3 = [-274096770.76544; -92859266.4499061; -40199493.6677441; 32.6704564599943; -8.93838913761049; -3.87881914050316; 1.0]; % X km, Y km, Z km, VX km/sec, VY km/sec, VZ km/sec, CR
 P0_3 = P0_2;
 
-% Qc = zeros(3);
-sigma_SNC = 1e-6; % 1e-7 too little for bad data
-Qc = diag(sigma_SNC^2*ones(1,3));
-[X_3_lkf, Xref_3_lkf, dx_3_lkf, P_3_lkf, y_3_lkf, alpha_3_lkf, cond_lkf] = CKF_proj2(tspan_3, data_3, meas_cov, Qc, X0_2, zeros(n,1), P0_2, 15, false, constants);
-plotResiduals(tspan_3, y_3_lkf, alpha_3_lkf, [rngNoise, rngRtNoise], ["Part 3 Pre-Fit Residuals vs. Time", "Part 3 Post-Fit Residuals vs. Time"])
-X_DCO_lkf = X_3_lkf(:,end);
-P_DCO_lkf = P_3_lkf(:,:,end);
+% rngNoise = 5e-1; % km
+% rngRtNoise = 0.5e-4; % km
+meas_cov = [rngNoise^2, 0; 0, rngRtNoise^2];
 
-[~, r3SOI_3, v3SOI_3, P_3SOI] = propogateTo3RSOI(tspan_3(end), X_DCO_lkf, P_DCO_lkf, constants);
-varyShat = false;
-[BdotVec_3, B_STM_3] = Bplane(r3SOI_3, v3SOI_3, muE, varyShat);
-P_B_3 = B_STM_3*P_3SOI*B_STM_3';
-legendStrings = ["3$\sigma$", "Estimated Target"];
-plotBplane(BdotVec_3, P_B_3, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", [], constants.ae)
+%% regular lkf
+% % Qc = zeros(3);
+% sigma_SNC = 1e-6; % 1e-7 too little for bad data
+% Qc = diag(sigma_SNC^2*ones(1,3));
+% [X_3_lkf, Xref_3_lkf, dx_3_lkf, P_3_lkf, y_3_lkf, alpha_3_lkf, cond_lkf] = CKF_proj2(tspan_3, data_3, meas_cov, Qc, X0_3, zeros(n,1), P0_2, 15, false, constants);
+% plotResiduals(tspan_3, y_3_lkf, alpha_3_lkf, [rngNoise, rngRtNoise], ["Part 3 Pre-Fit Residuals vs. Time", "Part 3 Post-Fit Residuals vs. Time"])
+% X_DCO_lkf = X_3_lkf(:,end);
+% P_DCO_lkf = P_3_lkf(:,:,end);
+% 
+% [~, r3SOI_3, v3SOI_3, P_3SOI] = propogateTo3RSOI(tspan_3(end), X_DCO_lkf, P_DCO_lkf, constants);
+% varyShat = false;
+% [BdotVec_3, B_STM_3] = Bplane(r3SOI_3, v3SOI_3, muE, varyShat);
+% P_B_3 = B_STM_3*P_3SOI*B_STM_3';
+% legendStrings = ["3$\sigma$", "Estimated Target"];
+% plotBplane(BdotVec_3, P_B_3, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", [], constants.ae)
+% 
+% condCheck = log(cond_lkf);
+% figure
+% plot(condCheck)
+% hold on
+% yline(15)
+% title("Condition Number of $(H*P^-*H' + R)$", 'Interpreter','latex')
+
+%% part 3 with constants
+r_stns_E = zeros(3,3);
+for i = 1:3
+    r_stns_E(:,i) = latlon2ECEF(ae+constants.DSS_alt(i), constants.DSS_latlon(i,1), constants.DSS_latlon(i,2));
+end
+% X0_3const = [X0_3; muE; muS; p_srAU; a2m; reshape(r_stns_E, [],1)];
+% X0_3const = [X0_3; muE; muS; p_srAU; reshape(r_stns_E, [],1)];
+% P0_constants = diag([1e-61, 1e-60, 0.00453*10^-2, 1e-10, 1e-16*ones(1,3), 1*ones(1,6)]);
+% P0_constants = diag([1e-40, 1e-30, 0.00453*10^-2, 1e-10, 1e-16*ones(1,3), 1*ones(1,6)]);
+% P0_constants = diag([1e-61, 1e-60, 0.00453*10^-2, 1e-10*ones(1,3), 1e-2*ones(1,6)]);
+% P0_constants = diag([1e-61, 1e-60, (0.00453*10^-2)^2, (1e-10)^2, 1e-16*ones(1,3), 1e-2*ones(1,6)]);
+X0_3const = [X0_3; muE; muS; reshape(r_stns_E, [],1)];
+P0_constants = diag([1e-40, 1e-30, 1e-16*ones(1,3), 1e-2*ones(1,6)]);
+P0_3const = blkdiag(P0_3,P0_constants);
+n = 18;
+% n = 19;
+
+% Qc = zeros(3);
+sigma_SNC = 1e-8; % 1e-6 too large
+Qc = diag(sigma_SNC^2*ones(1,3));
+[X_3_lkf, Xref_3_lkf, dx_3_lkf, P_3_lkf, y_3_lkf, alpha_3_lkf, cond_lkf] = CKF_proj2(tspan_3, data_3, meas_cov, Qc, X0_3const, zeros(n,1), P0_3const, 15, false, constants);
+plotResiduals(tspan_3, y_3_lkf, alpha_3_lkf, [rngNoise, rngRtNoise], ["Part 3 Pre-Fit Residuals vs. Time (Incorporated Constants)", "Part 3 Post-Fit Residuals vs. Time (Incorporated Constants)"])
+% X_DCO_lkf = X_3_lkf(:,end);
+% P_DCO_lkf = P_3_lkf(:,:,end);
+
+% [~, r3SOI_3, v3SOI_3, P_3SOI] = propogateTo3RSOI(tspan_3(end), X_DCO_lkf, P_DCO_lkf, constants);
+% varyShat = false;
+% [BdotVec_3, B_STM_3] = Bplane(r3SOI_3, v3SOI_3, muE, varyShat);
+% P_B_3 = B_STM_3*P_3SOI*B_STM_3';
+% legendStrings = ["3$\sigma$", "Estimated Target"];
+% plotBplane(BdotVec_3, P_B_3, legendStrings, "B-Plane (Fixed $\hat{S}$) - Question 2h", [], constants.ae)
 
 condCheck = log(cond_lkf);
 figure
@@ -266,3 +314,12 @@ plot(condCheck)
 hold on
 yline(15)
 title("Condition Number of $(H*P^-*H' + R)$", 'Interpreter','latex')
+
+%% SRIF
+
+[X_SRIF, P_SRIF, u_SRIF, Xref_SRIF, dx_SRIF, y_SRIF, e_SRIF] = SRIF_procNoise(tspan_3, data_3, X0_3const, zeros(n,1), P0_3const, meas_cov, Qc, constants);
+plotResiduals(tspan_3, y_SRIF, e_SRIF, [rngNoise, rngRtNoise], ["SRIF Pre-Fit Residuals vs. Time (Incorporated Constants)", "SRIF e vs. Time (Incorporated Constants)"])
+
+%% 
+plotDeltaX(tspan_3, X_3_lkf-X0_3const, "constants")
+plotDeltaX(tspan_3, X_SRIF-X0_3const, "constants")

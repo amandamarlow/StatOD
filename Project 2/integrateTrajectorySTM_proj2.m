@@ -8,7 +8,11 @@ S0 = [X_t1; reshape(STM_t1,[],1)];
 
 % simulate of reference trajectory
 options = odeset('RelTol',1e-12,'AbsTol',1e-12);
-[~,S] = ode45(@(t,S) project2ODE(t,S,constants), tspan, S0, options);
+if n > 7
+    [~,S] = ode45(@(t,S) proj2ODEwConsts(t,S,constants), tspan, S0, options);
+else
+    [~,S] = ode45(@(t,S) project2ODE(t,S,constants), tspan, S0, options);
+end
 
 % STM
 flatSTM = S(:,n+1:end);
